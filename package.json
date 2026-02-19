@@ -1,24 +1,46 @@
 {
-  "name": "vue-timepicker",
-  "private": true,
-  "version": "0.0.0",
+  "name": "vue3-time-picker",
+  "version": "0.1.0",
+  "description": "A flexible Vue 3 timepicker component with multiple format support, range selection, and fully customisable styling",
+  "license": "MIT",
+  "author": "Manos Savvides",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/manos02/vue-timepicker"
+  },
   "type": "module",
-  "types": "dist/types/index.d.ts",
+  "main": "./dist/vue-timepicker.umd.cjs",
+  "module": "./dist/vue-timepicker.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/vue-timepicker.css",
   "exports": {
     ".": {
-	    "types": "./dist/index.d.ts",
-      "import": "./dist/FileNameInDist.js",
-      "require": "./dist/FileNameInDist.umd.cjs"
-    }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/vue-timepicker.js",
+      "require": "./dist/vue-timepicker.umd.cjs"
+    },
+    "./style.css": "./dist/vue-timepicker.css"
   },
   "files": [
-    "dist",
-    "src"
-  ],  
+    "dist"
+  ],
+  "keywords": [
+    "vue",
+    "vue3",
+    "timepicker",
+    "time-picker",
+    "time",
+    "component",
+    "range",
+    "12h",
+    "24h"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "peerDependencies": {
     "vue": "^3.5.18"
@@ -26,10 +48,13 @@
   "devDependencies": {
     "@types/node": "^24.3.0",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
+    "happy-dom": "^20.6.3",
     "typescript": "~5.8.3",
     "vite": "^7.1.3",
     "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18",
     "vue-tsc": "^3.0.6"
   }
 }

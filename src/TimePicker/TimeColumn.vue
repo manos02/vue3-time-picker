@@ -51,7 +51,9 @@ function scrollToActive() {
   nextTick(() => {
     const panel = menu.value;
     if (!panel) return;
-    const activeEl = panel.querySelector(".timepicker-option--active") as HTMLElement | null;
+    const activeEl = panel.querySelector(
+      ".timepicker-option--active",
+    ) as HTMLElement | null;
     if (activeEl) {
       // Center the active item in the scrollable panel
       const panelHeight = panel.clientHeight;
