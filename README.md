@@ -6,7 +6,6 @@ A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 - Multiple hour formats: 24-hour (`HH`/`H`), 12-hour (`hh`/`h` with AM/PM), 1-24 (`kk`/`k`)
 - Optional seconds
 - Inline masked input with overwrite-only editing
-- Dropdown column selectors with auto-scroll to active value
 - Step intervals for hours, minutes, and seconds
 - Fully styleable via CSS custom properties
 
@@ -77,12 +76,13 @@ const range = ref(["09:00:00", "17:00:00"]);
 </template>
 ```
 
-When `range` is `true`, `modelValue` must be a `[string, string]` array. Typing the last digit of the first input automatically moves focus to the second input.
+When `range` is `true`, `modelValue` must be a `[string, string]` array.
 
 ## 12-hour format
 
 ```vue
-<TimePicker v-model="time" format="hh:mm A" />
+<TimePicker v-model="time" format="hh:mm A" /> // AM/PM
+<TimePicker v-model="time" format="hh:mm a" /> // am/pm
 ```
 
 Press `a` or `p` while focused to toggle between AM and PM.
