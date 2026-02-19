@@ -105,6 +105,29 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKeydown));
 const hourIdx = ref(Math.floor(props.initTime.h / props.hourStep!) || 0);
 const minuteIdx = ref(Math.floor(props.initTime.m / props.minuteStep!) || 0);
 const secondIdx = ref(Math.floor(props.initTime.s / props.secondStep!) || 0);
+
+// Keep indices in sync when initTime changes externally (e.g. typed input)
+watch(
+  () => props.initTime,
+  (t) => {
+    const hStep = Math.max(1, props.hourStep!);
+    const mStep = Math.max(1, props.minuteStep!);
+    const sStep = Math.max(1, props.secondStep!);
+
+    let hForIdx = t.h;
+    if (show12UI.value) {
+      // In 12-h mode the list is indexed 0..11/step; derive the 12-h value
+      ampmIdx.value = t.h >= 12 ? 1 : 0;
+      hForIdx = t.h % 12; // 0-based for list lookup
+    } else if (isKFormat.value && t.h === 0) {
+      hForIdx = 24;
+    }
+
+    hourIdx.value = Math.floor(hForIdx / hStep);
+    minuteIdx.value = Math.floor(t.m / mStep);
+    secondIdx.value = Math.floor(t.s / sStep);
+  },
+);
 function makeList(max: number, step: number): Item[] {
   const arr: Item[] = [];
   for (let i = 0; i < max; i += Math.max(1, step)) {

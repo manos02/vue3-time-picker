@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch, nextTick, onMounted } from "vue";
 
 const props = defineProps<{
   items: Array<{
@@ -45,6 +45,28 @@ const emit = defineEmits<{
   (e: "select", v: any): void;
 }>();
 
+const menu = ref<HTMLElement | null>(null);
+
+function scrollToActive() {
+  nextTick(() => {
+    const panel = menu.value;
+    if (!panel) return;
+    const activeEl = panel.querySelector(".timepicker-option--active") as HTMLElement | null;
+    if (activeEl) {
+      // Center the active item in the scrollable panel
+      const panelHeight = panel.clientHeight;
+      const elTop = activeEl.offsetTop;
+      const elHeight = activeEl.offsetHeight;
+      panel.scrollTop = elTop - panelHeight / 2 + elHeight / 2;
+    }
+  });
+}
+
+onMounted(scrollToActive);
+
+// Re-scroll when the active index changes (e.g. typed input updates model)
+watch(() => props.activeIndex, scrollToActive);
+
 function setActive(i: number) {
   emit("update:activeIndex", i);
   emit("select", props.items[i]?.value);
@@ -53,4 +75,4 @@ function setActive(i: number) {
 const focusIndex = ref<number>(props.activeIndex ?? 0);
 </script>
 
-<style src="../style.css"></style>
+<style src="../styles/timepicker.css"></style>

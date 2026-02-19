@@ -1,10 +1,51 @@
+/* ===================================================
+ * vue-timepicker — all styles
+ *
+ * Customisable via CSS custom properties.
+ * Set them on .timepicker-shell or any ancestor:
+ *
+ *  --vtp-font-family
+ *  --vtp-font-size
+ *  --vtp-bg
+ *  --vtp-color
+ *  --vtp-border
+ *  --vtp-border-radius
+ *  --vtp-padding
+ *  --vtp-focus-ring          (box-shadow on focus)
+ *  --vtp-error-border
+ *  --vtp-error-ring
+ *  --vtp-separator-color     (the "–" between range fields)
+ *  --vtp-dropdown-bg
+ *  --vtp-dropdown-border
+ *  --vtp-dropdown-shadow
+ *  --vtp-dropdown-radius
+ *  --vtp-dropdown-max-height
+ *  --vtp-option-padding
+ *  --vtp-option-radius
+ *  --vtp-option-hover-bg
+ *  --vtp-option-active-bg
+ *  --vtp-option-active-color
+ *  --vtp-option-active-weight
+ *  --vtp-columns-gap
+ * =================================================== */
+
+/* ── Scoped box-sizing reset ────────────────────────── */
+.timepicker-shell,
+.timepicker-shell *,
+.timepicker-shell *::before,
+.timepicker-shell *::after {
+  box-sizing: border-box;
+}
+
 /* ===============================
- * Time picker shell
+ * Shell
  * =============================== */
 .timepicker-shell {
+  position: relative;
   display: inline-block;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
-    Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  font-family: var(--vtp-font-family, inherit);
+  font-size: var(--vtp-font-size, inherit);
+  color: var(--vtp-color, inherit);
 }
 
 /* ===============================
@@ -13,22 +54,34 @@
 .timepicker-shell__input {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  background: #fff;
-  border: 1px solid #dcdcdc;
-  color: #111;
+  gap: 0.25rem;
+  padding: var(--vtp-padding, 0.375rem 0.5rem);
+  border-radius: var(--vtp-border-radius, 6px);
+  background: var(--vtp-bg, #fff);
+  border: 1px solid var(--vtp-border, #ccc);
+  color: var(--vtp-color, inherit);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.timepicker-shell__input:focus-within {
+  border-color: var(--vtp-focus-border, #66afe9);
+  box-shadow: var(--vtp-focus-ring, 0 0 0 2px rgba(102, 175, 233, 0.3));
 }
 
 .timepicker-shell__input--error {
-  border-color: #e74c3c;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.06);
+  border-color: var(--vtp-error-border, #e74c3c);
+  box-shadow: var(--vtp-error-ring, 0 0 0 2px rgba(231, 76, 60, 0.15));
 }
 
-.timepicker-shell__input span {
-  opacity: 0.7;
-  margin: 0 0.25rem;
+/* Range separator "–" */
+.timepicker-shell__input .timepicker-separator {
+  color: var(--vtp-separator-color, currentColor);
+  opacity: 0.5;
+  flex: 0 0 auto;
+  user-select: none;
+  line-height: 1;
 }
 
 /* ===============================
@@ -43,8 +96,89 @@
   font: inherit;
   color: inherit;
   padding: 0;
+  margin: 0;
+  text-align: center;
 }
 
 .timepicker-field:focus {
   outline: none;
+}
+
+.timepicker-field::placeholder {
+  color: var(--vtp-color, inherit);
+  opacity: 0.4;
+}
+
+/* ===============================
+ * Dropdown container
+ * =============================== */
+.timepicker-dropdown {
+  display: inline-block;
+}
+
+/* ===============================
+ * Dropdown panel
+ * =============================== */
+.timepicker-dropdown__panel {
+  min-width: 48px;
+  max-height: var(--vtp-dropdown-max-height, 220px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.25rem;
+  border: 1px solid var(--vtp-dropdown-border, var(--vtp-border, #ccc));
+  border-radius: var(--vtp-dropdown-radius, 0.5rem);
+  background: var(--vtp-dropdown-bg, var(--vtp-bg, #fff));
+  box-shadow: var(--vtp-dropdown-shadow, 0 4px 12px rgba(0, 0, 0, 0.08));
+  outline: none;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+}
+
+.timepicker-dropdown__panel::-webkit-scrollbar {
+  width: 5px;
+}
+.timepicker-dropdown__panel::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.25);
+  border-radius: 3px;
+}
+.timepicker-dropdown__panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ===============================
+ * Dropdown options
+ * =============================== */
+.timepicker-option {
+  padding: var(--vtp-option-padding, 0.3rem 0.5rem);
+  border-radius: var(--vtp-option-radius, 4px);
+  cursor: pointer;
+  line-height: 1.4;
+  text-align: center;
+  transition: background 0.1s;
+}
+
+.timepicker-option--focused,
+.timepicker-option:hover {
+  background: var(--vtp-option-hover-bg, rgba(0, 0, 0, 0.06));
+}
+
+.timepicker-option--active {
+  background: var(--vtp-option-active-bg, #e8f0fe);
+  color: var(--vtp-option-active-color, inherit);
+  font-weight: var(--vtp-option-active-weight, 600);
+}
+
+.timepicker-option--disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ===============================
+ * Column layout (TimeSelection)
+ * =============================== */
+.vtp-cols {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: var(--vtp-columns-gap, 0.25rem);
 }

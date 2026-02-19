@@ -10,12 +10,14 @@
         <input
           type="text"
           class="timepicker-field"
-          v-model="firstInputValue"
+          :value="firstInputValue"
           :placeholder="resolvedFormat"
           :style="{ width: fieldWidth }"
           @focus="openFirst = true"
-          @keydown.enter.prevent="commitTypedTime('first')"
-          @blur="commitTypedTime('first')"
+          @keydown="onFirstKeydown"
+          @input="firstMask.handleInput"
+          @paste="firstMask.handlePaste"
+          @blur="commitMaskedTime('first')"
         />
       </div>
     </template>
@@ -28,23 +30,28 @@
         <input
           type="text"
           class="timepicker-field"
-          v-model="firstInputValue"
+          :value="firstInputValue"
           :placeholder="resolvedFormat"
           :style="{ width: fieldWidth }"
           @focus="openFirst = true"
-          @keydown.enter.prevent="commitTypedTime('first')"
-          @blur="commitTypedTime('first')"
+          @keydown="onFirstKeydown"
+          @input="firstMask.handleInput"
+          @paste="firstMask.handlePaste"
+          @blur="commitMaskedTime('first')"
         />
-        <span>-</span>
+        <span class="timepicker-separator">–</span>
         <input
+          ref="secondInputRef"
           type="text"
           class="timepicker-field"
-          v-model="secondInputValue"
+          :value="secondInputValue"
           :placeholder="resolvedFormat"
           :style="{ width: fieldWidth }"
           @focus="openSecond = true"
-          @keydown.enter.prevent="commitTypedTime('second')"
-          @blur="commitTypedTime('second')"
+          @keydown="onSecondKeydown"
+          @input="secondMask.handleInput"
+          @paste="secondMask.handlePaste"
+          @blur="commitMaskedTime('second')"
         />
       </div>
     </template>
@@ -76,24 +83,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
-import TimeColumn from "./TimeColumn.vue";
+import { computed, nextTick, ref, watch } from "vue";
 import TimeSelection from "./TimeSelection.vue";
-import {
-  InternalFormat,
-  Item,
-  timePickerProps,
-  type TimePickerEmits,
-} from "./types";
-import {
-  is12h,
-  hasSeconds,
-  formatTime,
-  to24,
-  isPm,
-  hasK,
-  parseFromModel,
-} from "../helpers";
+import { InternalFormat, timePickerProps, type TimePickerEmits } from "./types";
+import { formatTime, parseFromModel } from "../helpers";
+import { useTimeMask } from "./useTimeMask";
 
 const lastErrorCode = ref<string | null>(null);
 /* ================================
@@ -104,6 +98,14 @@ const emit = defineEmits<TimePickerEmits>();
 
 const openFirst = ref(false);
 const openSecond = ref(false);
+
+// Ensure only one dropdown is open at a time
+watch(openFirst, (v) => {
+  if (v) openSecond.value = false;
+});
+watch(openSecond, (v) => {
+  if (v) openFirst.value = false;
+});
 
 const init = computed<InternalFormat | [InternalFormat, InternalFormat]>({
   get() {
@@ -168,19 +170,19 @@ watch(
       // Range selection
       if (!Array.isArray(props.modelValue)) {
         throw new RangeError(
-          `Model value must be an array for range selection: ${props.modelValue}`
+          `Model value must be an array for range selection: ${props.modelValue}`,
         );
       }
     } else {
       // Handle single time selection
       if (Array.isArray(props.modelValue)) {
         throw new RangeError(
-          `Model value must be a single string for single time selection: ${props.modelValue}`
+          `Model value must be a single string for single time selection: ${props.modelValue}`,
         );
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
@@ -188,55 +190,128 @@ const fieldWidth = computed(() => {
   const length = Math.min(10, Math.max(4, resolvedFormat.value.length));
   return `${length}ch`;
 });
-const firstInputValue = ref("");
-const secondInputValue = ref("");
 
+/* ── Time-mask composables (one per input) ── */
+const firstMask = useTimeMask(resolvedFormat);
+const firstInputValue = firstMask.inputValue;
+
+const secondMask = useTimeMask(resolvedFormat);
+const secondInputValue = secondMask.inputValue;
+
+// Sync mask ← model (column-picker changes, initial load, format change)
 watch(
   () => [firstInit.value, resolvedFormat.value],
   ([val]) => {
-    firstInputValue.value = formatTime(resolvedFormat.value, val);
+    firstMask.setFromTime(val as InternalFormat);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 watch(
   () => [secondInit.value, resolvedFormat.value, props.range],
   ([val, , isRange]) => {
     if (!isRange) {
-      secondInputValue.value = "";
+      secondMask.setFromTime({ h: 0, m: 0, s: 0 });
       return;
     }
-    secondInputValue.value = formatTime(resolvedFormat.value, val);
+    secondMask.setFromTime(val as InternalFormat);
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-const parseTypedValue = (value: string): InternalFormat | null => {
-  if (!value.trim()) return null;
-  try {
-    return parseFromModel(value.trim(), resolvedFormat.value);
-  } catch {
-    return null;
-  }
-};
+const secondInputRef = ref<HTMLInputElement | null>(null);
 
-const commitTypedTime = (target: "first" | "second") => {
-  const buffer = target === "first" ? firstInputValue : secondInputValue;
-  const parsed = parseTypedValue(buffer.value);
-  if (!parsed) {
-    lastErrorCode.value = "invalid-time";
+/* ── Keydown wrappers (Enter commits, rest goes to mask) ── */
+function onFirstKeydown(e: KeyboardEvent) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    commitMaskedTime("first");
     return;
   }
-  lastErrorCode.value = null;
 
-  if (target === "first") {
-    firstInit.value = parsed;
-    buffer.value = formatTime(resolvedFormat.value, firstInit.value);
-  } else if (props.range) {
-    secondInit.value = parsed;
-    buffer.value = formatTime(resolvedFormat.value, secondInit.value);
+  // Close dropdowns while typing
+  if (/^\d$/.test(e.key)) {
+    openFirst.value = false;
+    openSecond.value = false;
   }
-};
+
+  // Check cursor position BEFORE the mask processes the key
+  const el = e.target as HTMLInputElement;
+  const cursorBefore = firstMask.displayPosToDigitIndex(el.selectionStart ?? 0);
+  const isLastDigit =
+    /^\d$/.test(e.key) && cursorBefore >= firstMask.totalDigits.value - 1;
+
+  firstMask.handleKeydown(e);
+
+  // Keep model in sync after every digit so the dropdown is up-to-date
+  if (/^\d$/.test(e.key)) {
+    const parsed = firstMask.getParsedTime();
+    if (parsed) {
+      lastErrorCode.value = null;
+      firstInit.value = parsed;
+    }
+  }
+
+  // In range mode, auto-focus the second input when the last digit is typed
+  if (props.range && isLastDigit && secondInputRef.value) {
+    commitMaskedTime("first");
+    nextTick(() => {
+      const el2 = secondInputRef.value;
+      if (el2) {
+        el2.focus();
+        el2.selectionStart = el2.selectionEnd = 0;
+      }
+    });
+  }
+}
+
+function onSecondKeydown(e: KeyboardEvent) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    commitMaskedTime("second");
+    return;
+  }
+
+  // Close dropdowns while typing
+  if (/^\d$/.test(e.key)) {
+    openFirst.value = false;
+    openSecond.value = false;
+  }
+
+  secondMask.handleKeydown(e);
+
+  // Keep model in sync after every digit so the dropdown is up-to-date
+  if (/^\d$/.test(e.key)) {
+    const parsed = secondMask.getParsedTime();
+    if (parsed) {
+      lastErrorCode.value = null;
+      secondInit.value = parsed;
+    }
+  }
+}
+
+/* ── Commit: parse mask → model, then re-sync display ── */
+function commitMaskedTime(target: "first" | "second") {
+  const mask = target === "first" ? firstMask : secondMask;
+  const parsed = mask.getParsedTime();
+
+  if (parsed) {
+    lastErrorCode.value = null;
+    if (target === "first") {
+      firstInit.value = parsed;
+    } else if (props.range) {
+      secondInit.value = parsed;
+    }
+  }
+
+  // Always re-sync the display to the current model value
+  // (reverts incomplete input, normalises clamped values)
+  if (target === "first") {
+    firstMask.setFromTime(firstInit.value);
+  } else if (props.range) {
+    secondMask.setFromTime(secondInit.value);
+  }
+}
 </script>
 
 <style src="../styles/timepicker.css"></style>
