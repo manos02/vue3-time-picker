@@ -65,7 +65,7 @@ function parseMaskFormat(fmt: string): ParsedMaskFormat {
   return {
     digitGroups,
     hasAmPm: !!ampmToken,
-    ampmLowercase: ampmToken === 'a' || ampmToken === 'p',
+    ampmLowercase: ampmToken === "a" || ampmToken === "p",
   };
 }
 

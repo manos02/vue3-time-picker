@@ -34,14 +34,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import TimeColumn from "./TimeColumn.vue";
-import { InternalFormat, Item  } from "./types";
-import {
-  hasK,
-  hasSeconds,
-  is12h,
-  isPm,
-  to24,
-} from "../helpers";
+import { InternalFormat, Item } from "./types";
+import { hasK, hasSeconds, is12h, isPm, to24 } from "../helpers";
 
 const show12UI = computed(() => is12h(props.format));
 const showSecondsUI = computed(() => hasSeconds(props.format));
@@ -91,7 +85,7 @@ function onDocMousedown(e: MouseEvent) {
 }
 onMounted(() => document.addEventListener("mousedown", onDocMousedown));
 onBeforeUnmount(() =>
-  document.removeEventListener("mousedown", onDocMousedown)
+  document.removeEventListener("mousedown", onDocMousedown),
 );
 
 /**  ESC to close */
@@ -195,10 +189,10 @@ const hourVal = computed(() => {
 });
 
 const minuteVal = computed(() =>
-  Number(minutesList.value[minuteIdx.value]?.value ?? 0)
+  Number(minutesList.value[minuteIdx.value]?.value ?? 0),
 );
 const secondVal = computed(() =>
-  Number(secondsList.value[secondIdx.value]?.value ?? 0)
+  Number(secondsList.value[secondIdx.value]?.value ?? 0),
 );
 
 /* ================================
@@ -220,13 +214,12 @@ function confirm() {
   openLocal.value = false;
 }
 
-
 watch(
   [hourVal, minuteVal, secondVal],
   ([h, m, s]) => {
     const obj = { h, m, s };
     emit("update:initTime", obj);
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>

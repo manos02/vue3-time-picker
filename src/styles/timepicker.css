@@ -125,6 +125,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 0.25rem;
+  padding-right: 0.125rem;
   border: 1px solid var(--vtp-dropdown-border, var(--vtp-border, #ccc));
   border-radius: var(--vtp-dropdown-radius, 0.5rem);
   background: var(--vtp-dropdown-bg, var(--vtp-bg, #fff));
@@ -133,6 +134,7 @@
 
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.25) transparent;
+  scrollbar-gutter: stable;
 }
 
 .timepicker-dropdown__panel::-webkit-scrollbar {
