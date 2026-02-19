@@ -187,8 +187,10 @@ watch(
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
 const fieldWidth = computed(() => {
-  const length = Math.min(10, Math.max(4, resolvedFormat.value.length));
-  return `${length}ch`;
+  let length = resolvedFormat.value.length;
+  // AM/PM token is 1 char in format but renders as 2 chars (am/pm/AM/PM)
+  if (/[AaPp]$/.test(resolvedFormat.value)) length += 1;
+  return `${Math.min(12, Math.max(4, length))}ch`;
 });
 
 /* ── Time-mask composables (one per input) ── */

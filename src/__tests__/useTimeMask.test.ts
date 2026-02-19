@@ -156,12 +156,26 @@ describe("useTimeMask", () => {
       expect(mask.inputValue.value).toBe("12:30 AM");
     });
 
+    it("shows lowercase am/pm when format uses lowercase a", () => {
+      const mask = useTimeMask(ref("hh:mm a"));
+      typeDigits(mask, el, "1230");
+      expect(mask.inputValue.value).toBe("12:30 am");
+    });
+
     it("toggles to PM with the p key", () => {
       const mask = useTimeMask(ref("hh:mm A"));
       typeDigits(mask, el, "1230");
       pressKey(mask, el, "p");
       expect(mask.ampm.value).toBe("PM");
       expect(mask.inputValue.value).toBe("12:30 PM");
+    });
+
+    it("toggles to lowercase pm with the p key", () => {
+      const mask = useTimeMask(ref("hh:mm a"));
+      typeDigits(mask, el, "1230");
+      pressKey(mask, el, "p");
+      expect(mask.ampm.value).toBe("PM");
+      expect(mask.inputValue.value).toBe("12:30 pm");
     });
 
     it("toggles back to AM with the a key", () => {

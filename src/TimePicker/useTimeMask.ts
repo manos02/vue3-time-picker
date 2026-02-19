@@ -27,6 +27,7 @@ interface DigitGroup {
 interface ParsedMaskFormat {
   digitGroups: DigitGroup[];
   hasAmPm: boolean;
+  ampmLowercase: boolean;
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -61,7 +62,11 @@ function parseMaskFormat(fmt: string): ParsedMaskFormat {
     digitGroups.push({ token: secondToken, min: 0, max: 59 });
   }
 
-  return { digitGroups, hasAmPm: !!ampmToken };
+  return {
+    digitGroups,
+    hasAmPm: !!ampmToken,
+    ampmLowercase: ampmToken === 'a' || ampmToken === 'p',
+  };
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -100,7 +105,10 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
 
     // AM/PM suffix once every digit slot has been filled
     if (showAmPm && di >= totalDigits.value) {
-      out += " " + ampm.value;
+      const label = parsed.value.ampmLowercase
+        ? ampm.value.toLowerCase()
+        : ampm.value;
+      out += " " + label;
     }
 
     return out;
@@ -344,6 +352,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     () => rawDigits.value.length >= totalDigits.value,
   );
 
+  /** Whether the format uses lowercase a/p tokens */
+  const ampmLowercase = computed(() => parsed.value.ampmLowercase);
+
   return {
     inputValue,
     handleKeydown,
@@ -355,5 +366,6 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     totalDigits,
     displayPosToDigitIndex,
     ampm,
+    ampmLowercase,
   };
 }

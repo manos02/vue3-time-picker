@@ -34,13 +34,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import TimeColumn from "./TimeColumn.vue";
-import { InternalFormat, Item, TimePickerEmits } from "./types";
+import { InternalFormat, Item  } from "./types";
 import {
   hasK,
   hasSeconds,
   is12h,
   isPm,
-  parseFromModel,
   to24,
 } from "../helpers";
 
@@ -170,10 +169,15 @@ const hoursList = computed<Item[]>(() => {
 });
 const minutesList = computed<Item[]>(() => makeList(60, props.minuteStep!));
 const secondsList = computed<Item[]>(() => makeList(60, props.secondStep!));
-const ampmList = computed<Item[]>(() => [
-  { key: "AM", value: "AM", text: "AM" },
-  { key: "PM", value: "PM", text: "PM" },
-]);
+const ampmLower = computed(() => /\s[ap]$/.test(props.format));
+const ampmList = computed<Item[]>(() => {
+  const am = ampmLower.value ? "am" : "AM";
+  const pm = ampmLower.value ? "pm" : "PM";
+  return [
+    { key: "AM", value: "AM", text: am },
+    { key: "PM", value: "PM", text: pm },
+  ];
+});
 
 /* ================================
  * Selected values (internal 24h)
@@ -196,21 +200,6 @@ const minuteVal = computed(() =>
 const secondVal = computed(() =>
   Number(secondsList.value[secondIdx.value]?.value ?? 0)
 );
-
-// if (import.meta.env.DEV) {
-//   if (props.showSeconds && !props.seconds) {
-//     // eslint-disable-next-line no-console
-//     console.warn(
-//       "[TimeColumnsGroup] showSeconds is true but `seconds` list is missing."
-//     );
-//   }
-//   if (props.show12 && !props.ampm) {
-//     // eslint-disable-next-line no-console
-//     console.warn(
-//       "[TimeColumnsGroup] show12 is true but `ampm` list is missing."
-//     );
-//   }
-// }
 
 /* ================================
  * Handlers
