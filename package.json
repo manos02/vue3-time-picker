@@ -6,7 +6,7 @@
   "author": "Manos Savvides",
   "repository": {
     "type": "git",
-    "url": "https://github.com/manos02/vue-timepicker"
+    "url": "https://github.com/manos02/vue3-time-picker"
   },
   "type": "module",
   "main": "./dist/vue-timepicker.umd.cjs",
