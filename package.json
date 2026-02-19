@@ -1,12 +1,12 @@
 {
-  "name": "vue3-time-picker",
+  "name": "@manik02/vue3-timepicker",
   "version": "0.1.0",
   "description": "A flexible Vue 3 timepicker component with multiple format support, range selection, and fully customisable styling",
   "license": "MIT",
   "author": "Manos Savvides",
   "repository": {
     "type": "git",
-    "url": "https://github.com/manos02/vue3-time-picker"
+    "url": "git+https://github.com/manos02/vue3-time-picker.git"
   },
   "type": "module",
   "main": "./dist/vue-timepicker.umd.cjs",

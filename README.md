@@ -12,7 +12,7 @@ A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 ## Installation
 
 ```bash
-npm install vue3-time-picker
+npm install @manik02/vue3-timepicker
 ```
 
 ## Quick start
@@ -20,8 +20,8 @@ npm install vue3-time-picker
 ```vue
 <script setup>
 import { ref } from "vue";
-import { TimePicker } from "vue3-time-picker";
-import "vue3-time-picker/style.css";
+import { TimePicker } from "@manik02/vue3-timepicker";
+import "@manik02/vue3-timepicker/style.css";
 
 const time = ref("14:30:00");
 </script>
@@ -65,8 +65,8 @@ Combine tokens with `:` separators: `HH:mm`, `hh:mm:ss A`, `kk:mm`, etc.
 ```vue
 <script setup>
 import { ref } from "vue";
-import { TimePicker } from "vue3-time-picker";
-import "vue3-time-picker/style.css";
+import { TimePicker } from "@manik02/vue3-timepicker";
+import "@manik02/vue3-timepicker/style.css";
 
 const range = ref(["09:00:00", "17:00:00"]);
 </script>
@@ -81,8 +81,10 @@ When `range` is `true`, `modelValue` must be a `[string, string]` array.
 ## 12-hour format
 
 ```vue
-<TimePicker v-model="time" format="hh:mm A" /> // AM/PM
-<TimePicker v-model="time" format="hh:mm a" /> // am/pm
+<TimePicker v-model="time" format="hh:mm A" />
+// AM/PM
+<TimePicker v-model="time" format="hh:mm a" />
+// am/pm
 ```
 
 Press `a` or `p` while focused to toggle between AM and PM.
@@ -228,7 +230,7 @@ import type {
   TimeFormat,
   InternalFormat,
   TimePickerProps,
-} from "vue3-time-picker";
+} from "@manik02/vue3-timepicker";
 ```
 
 ## License
