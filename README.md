@@ -2,7 +2,7 @@
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
-![Demo](assets/demo.gif)
+![Demo](YOUR_GITHUB_URL_HERE)
 
 - Single and range time selection
 - Multiple hour formats: 24-hour (`HH`/`H`), 12-hour (`hh`/`h` with AM/PM), 1-24 (`kk`/`k`)
