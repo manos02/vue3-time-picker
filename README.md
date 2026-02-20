@@ -2,7 +2,13 @@
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
-![Demo](YOUR_GITHUB_URL_HERE)
+![Demo](assets/demo.gif)
+
+| Default | Dark |
+|---------|------|
+| ![Default](assets/screenshot-default.png) | ![Dark](assets/screenshot-dark.png) |
+
+![All themes](assets/screenshot-all.png)
 
 - Single and range time selection
 - Multiple hour formats: 24-hour (`HH`/`H`), 12-hour (`hh`/`h` with AM/PM), 1-24 (`kk`/`k`)
@@ -133,14 +139,6 @@ Style the component by setting CSS custom properties on `.timepicker-shell` or a
 ```
 
 All properties have sensible defaults and the component inherits font and colour from its parent by default.
-
-### Theme examples
-
-| Default                                   | Dark                                |
-| ----------------------------------------- | ----------------------------------- |
-| ![Default](assets/screenshot-default.png) | ![Dark](assets/screenshot-dark.png) |
-
-![All themes](assets/screenshot-all.png)
 
 ### Dark theme example
 
