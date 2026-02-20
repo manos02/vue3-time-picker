@@ -2,11 +2,9 @@
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
-![Demo](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/demo.gif)
-
-| Default | Dark |
-|---------|------|
-| ![Default](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-default.png) | ![Dark](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-dark.png) |
+| Demo | Default | Dark |
+|------|---------|------|
+| ![Demo](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/demo.gif) | ![Default](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-default.png) | ![Dark](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-dark.png) |
 
 ![All themes](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-all.png)
 
