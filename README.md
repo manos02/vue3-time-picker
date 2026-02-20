@@ -1,4 +1,4 @@
-# Vue Timepicker
+# Vue3 Timepicker
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
