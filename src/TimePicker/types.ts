@@ -1,6 +1,8 @@
 /// <reference types="vite/client" />
 import type { PropType, ExtractPropTypes } from "vue";
 
+declare const __DEV__: boolean | undefined;
+
 type HourToken = "HH" | "H" | "hh" | "h" | "kk" | "k";
 type MinuteToken = "mm" | "m";
 type SecondToken = `:${"ss" | "s"}`;
@@ -25,6 +27,13 @@ export const FORMAT_SHAPE =
   /^(HH|H|hh|h|kk|k):(mm|m)(?::(ss|s))?(?:\s*(A|a|P|p))?$/;
 export const TIME_SHAPE = /^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
 
+const isDev =
+  typeof __DEV__ !== "undefined"
+    ? __DEV__
+    : typeof process !== "undefined" &&
+        process.env &&
+        process.env.NODE_ENV !== "production";
+
 export const timePickerProps = {
   modelValue: {
     type: [String, Array] as PropType<string | [string, string] | null>,
@@ -36,7 +45,7 @@ export const timePickerProps = {
       } else {
         ok = v == undefined || TIME_SHAPE.test(v);
       }
-      if (!ok && import.meta.env.DEV) {
+      if (!ok && isDev) {
         console.error(
           `[VueTimepicker] \`modelValue\` is wrong. Received: ${v}`,
         );
@@ -56,10 +65,21 @@ export const timePickerProps = {
     default: "HH:mm",
     validator: (fmt: string) => {
       const ok = FORMAT_SHAPE.test(fmt);
-      if (!ok && import.meta.env.DEV) {
+      if (!ok && isDev) {
         console.error(
           `[VueTimepicker] \`format\` format is wrong. Received: ${fmt}`,
         );
+      }
+      return ok;
+    },
+  },
+  size: {
+    type: String as PropType<"sm" | "md" | "lg">,
+    default: "md",
+    validator: (v: string) => {
+      const ok = v === "sm" || v === "md" || v === "lg";
+      if (!ok && isDev) {
+        console.error(`[VueTimepicker] \`size\` is wrong. Received: ${v}`);
       }
       return ok;
     },
@@ -79,7 +99,7 @@ export const TimeSelectionProps = {
       } else {
         ok = v == null || TIME_SHAPE.test(v);
       }
-      if (!ok && import.meta.env.DEV) {
+      if (!ok && isDev) {
         console.error(
           `[VueTimepicker] \`modelValue\` is wrong. Received: ${v}`,
         );

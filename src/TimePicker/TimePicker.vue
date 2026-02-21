@@ -1,5 +1,5 @@
 <template>
-  <div class="timepicker-shell">
+  <div class="timepicker-shell" :data-size="props.size">
     <!-- Input / trigger -->
 
     <template v-if="!props.range">

@@ -47,6 +47,7 @@ const time = ref("14:30:00");
 | `hourStep`   | `number`                             | `1`         | Step interval for the hour column.                                       |
 | `minuteStep` | `number`                             | `1`         | Step interval for the minute column.                                     |
 | `secondStep` | `number`                             | `1`         | Step interval for the second column.                                     |
+| `size`       | `"sm" \| "md" \| "lg"`               | `"md"`     | Size preset that maps to CSS variables.                                  |
 
 ## Format tokens
 
@@ -102,6 +103,20 @@ Press `a` or `p` while focused to toggle between AM and PM.
 ```
 
 The dropdown columns will show values at the specified intervals (e.g. 00, 15, 30, 45 for a 15-minute step).
+
+## Size presets
+
+```vue
+<template>
+  <div class="sizes">
+    <TimePicker v-model="time" format="HH:mm" size="sm" />
+    <TimePicker v-model="time" format="HH:mm" size="md" />
+    <TimePicker v-model="time" format="HH:mm" size="lg" />
+  </div>
+</template>
+```
+
+Each preset sets a handful of CSS custom properties (`--vtp-font-size`, `--vtp-padding`, `--vtp-option-padding`, `--vtp-dropdown-radius`). You can still override any of them manually.
 
 ## CSS custom properties
 

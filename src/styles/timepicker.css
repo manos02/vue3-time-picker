@@ -49,6 +49,30 @@
 }
 
 /* ===============================
+ * Size presets
+ * =============================== */
+.timepicker-shell[data-size="sm"] {
+  --vtp-font-size: 0.875rem;
+  --vtp-padding: 0.25rem 0.375rem;
+  --vtp-option-padding: 0.2rem 0.375rem;
+  --vtp-dropdown-radius: 0.4rem;
+}
+
+.timepicker-shell[data-size="md"] {
+  --vtp-font-size: 1rem;
+  --vtp-padding: 0.375rem 0.5rem;
+  --vtp-option-padding: 0.3rem 0.5rem;
+  --vtp-dropdown-radius: 0.5rem;
+}
+
+.timepicker-shell[data-size="lg"] {
+  --vtp-font-size: 1.125rem;
+  --vtp-padding: 0.5rem 0.65rem;
+  --vtp-option-padding: 0.4rem 0.65rem;
+  --vtp-dropdown-radius: 0.6rem;
+}
+
+/* ===============================
  * Input wrapper
  * =============================== */
 .timepicker-shell__input {
