@@ -23,6 +23,8 @@ A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 npm install @manik02/vue3-timepicker
 ```
 
+Try it live: [Interactive Playground](https://manos02.github.io/vue3-time-picker/)
+
 ## Quick start
 
 ```vue

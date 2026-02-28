@@ -24,7 +24,7 @@ export function parseFromModel(
   str: string | null | undefined,
   fmt: string,
 ): { h: number; m: number; s: number } {
-  if (!str) return { h: 0, m: 0, s: 0 };
+  if (!str || typeof str !== "string") return { h: 0, m: 0, s: 0 };
 
   const nums = str.match(/\d+/g) || []; // extract numbers
 

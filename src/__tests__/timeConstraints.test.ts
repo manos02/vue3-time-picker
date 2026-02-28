@@ -20,6 +20,18 @@ async function typeDigits(
 }
 
 describe("time constraints (minTime/maxTime)", () => {
+  it("does not crash when disabledTimes contains malformed object values", () => {
+    expect(() => {
+      mount(TimePicker, {
+        props: {
+          modelValue: "12:00:00",
+          format: "HH:mm",
+          disabledTimes: [{ bad: "value" }] as any,
+        },
+      });
+    }).not.toThrow();
+  });
+
   it("disables input and prevents dropdown opening when disabled=true", async () => {
     const wrapper = mount(TimePicker, {
       props: {

@@ -673,6 +673,5 @@ declare const meta: {
 export default meta;
 type Story = StoryObj<typeof meta>;
 export declare const Playground: Story;
-export declare const Range: Story;
-export declare const WithConstraints: Story;
-export declare const Disabled: Story;
+export declare const FeatureGallery: Story;
+export declare const ThemedWithCssVariables: Story;
