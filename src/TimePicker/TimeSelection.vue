@@ -35,7 +35,15 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import TimeColumn from "./TimeColumn.vue";
 import { InternalFormat, Item } from "./types";
-import { hasK, hasSeconds, is12h, isPm, to24 } from "../helpers";
+import {
+  hasK,
+  hasSeconds,
+  isTimeInRanges,
+  is12h,
+  isPm,
+  isTimeWithinBounds,
+  to24,
+} from "../helpers";
 
 const show12UI = computed(() => is12h(props.format));
 const showSecondsUI = computed(() => hasSeconds(props.format));
@@ -46,6 +54,10 @@ const props = defineProps<{
   initTime: InternalFormat;
 
   format: string;
+  minTime?: InternalFormat | null;
+  maxTime?: InternalFormat | null;
+  disabledRanges?: Array<[InternalFormat, InternalFormat]>;
+  isTimeDisabled?: (time: InternalFormat) => boolean;
 
   hourStep?: number;
   minuteStep?: number;
@@ -153,7 +165,7 @@ function makeKHourList(step: number): Item[] {
 // AM/PM: 0 = AM, 1 = PM
 const ampmIdx = ref(isPm(props.format) ? 1 : 0);
 
-const hoursList = computed<Item[]>(() => {
+const baseHoursList = computed<Item[]>(() => {
   if (!show12UI.value) {
     if (isKFormat.value) return makeKHourList(props.hourStep!);
     return makeList(24, props.hourStep!);
@@ -161,10 +173,10 @@ const hoursList = computed<Item[]>(() => {
   const isPmNow = ampmIdx.value === 1;
   return make12HourList(isPmNow, props.hourStep!);
 });
-const minutesList = computed<Item[]>(() => makeList(60, props.minuteStep!));
-const secondsList = computed<Item[]>(() => makeList(60, props.secondStep!));
+const baseMinutesList = computed<Item[]>(() => makeList(60, props.minuteStep!));
+const baseSecondsList = computed<Item[]>(() => makeList(60, props.secondStep!));
 const ampmLower = computed(() => /\s[ap]$/.test(props.format));
-const ampmList = computed<Item[]>(() => {
+const baseAmpmList = computed<Item[]>(() => {
   const am = ampmLower.value ? "am" : "AM";
   const pm = ampmLower.value ? "pm" : "PM";
   return [
@@ -173,13 +185,112 @@ const ampmList = computed<Item[]>(() => {
   ];
 });
 
+const minuteCandidates = computed<number[]>(() =>
+  baseMinutesList.value.map((item) => Number(item.value ?? 0)),
+);
+const secondCandidates = computed<number[]>(() => {
+  if (!showSecondsUI.value) return [0];
+  return baseSecondsList.value.map((item) => Number(item.value ?? 0));
+});
+
+function getHour24(item: Item): number {
+  return Number(item.value ?? 0);
+}
+
+function findFirstEnabledIndex(items: Item[]): number {
+  const idx = items.findIndex((item) => !item.disabled);
+  return idx >= 0 ? idx : 0;
+}
+
+function isCandidateEnabled(time: InternalFormat): boolean {
+  if (!isTimeWithinBounds(time, props.minTime, props.maxTime)) return false;
+  if (isTimeInRanges(time, props.disabledRanges ?? [])) return false;
+  if (props.isTimeDisabled?.(time)) return false;
+  return true;
+}
+
+const hoursList = computed<Item[]>(() => {
+  return baseHoursList.value.map((item) => {
+    const candidateHour = getHour24(item);
+    const hasValidCombo = minuteCandidates.value.some((minute) =>
+      secondCandidates.value.some((second) =>
+        isCandidateEnabled({ h: candidateHour, m: minute, s: second }),
+      ),
+    );
+
+    return {
+      ...item,
+      disabled: !hasValidCombo,
+    };
+  });
+});
+
+const minutesList = computed<Item[]>(() => {
+  const selectedHour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
+  return baseMinutesList.value.map((item) => {
+    const candidateMinute = Number(item.value ?? 0);
+    const hasValidCombo = secondCandidates.value.some((second) =>
+      isCandidateEnabled({ h: selectedHour, m: candidateMinute, s: second }),
+    );
+
+    return {
+      ...item,
+      disabled: !hasValidCombo,
+    };
+  });
+});
+
+const secondsList = computed<Item[]>(() => {
+  const selectedHour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
+  const selectedMinute = Number(
+    baseMinutesList.value[minuteIdx.value]?.value ?? 0,
+  );
+  return baseSecondsList.value.map((item) => {
+    const candidateSecond = Number(item.value ?? 0);
+    return {
+      ...item,
+      disabled: !isCandidateEnabled({
+        h: selectedHour,
+        m: selectedMinute,
+        s: candidateSecond,
+      }),
+    };
+  });
+});
+
+const ampmList = computed<Item[]>(() => {
+  if (!show12UI.value) return baseAmpmList.value;
+
+  const minute = Number(baseMinutesList.value[minuteIdx.value]?.value ?? 0);
+  const second = showSecondsUI.value
+    ? Number(baseSecondsList.value[secondIdx.value]?.value ?? 0)
+    : 0;
+
+  return baseAmpmList.value.map((item) => {
+    const isPmMode = item.value === "PM";
+    const hasValidCombo = make12HourList(isPmMode, props.hourStep!).some(
+      (hourItem) =>
+        isCandidateEnabled({
+          h: Number(hourItem.value ?? 0),
+          m: minute,
+          s: second,
+        }),
+    );
+
+    return {
+      ...item,
+      disabled: !hasValidCombo,
+    };
+  });
+});
+
 /* ================================
  * Selected values (internal 24h)
  * ================================ */
 const ampmVal = computed(() => (ampmIdx.value === 1 ? "PM" : "AM"));
 
 const hourVal = computed(() => {
-  const hour = Number(hoursList.value[hourIdx.value]?.value ?? 0);
+  const hour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
   if (show12UI.value) {
     // convert am/pm
     return ampmVal.value === "PM" ? to24(hour, true) : to24(hour, false);
@@ -189,11 +300,39 @@ const hourVal = computed(() => {
 });
 
 const minuteVal = computed(() =>
-  Number(minutesList.value[minuteIdx.value]?.value ?? 0),
+  Number(baseMinutesList.value[minuteIdx.value]?.value ?? 0),
 );
 const secondVal = computed(() =>
-  Number(secondsList.value[secondIdx.value]?.value ?? 0),
+  Number(baseSecondsList.value[secondIdx.value]?.value ?? 0),
 );
+
+watch(hoursList, (items) => {
+  if (!items.length) return;
+  if (!items[hourIdx.value] || items[hourIdx.value].disabled) {
+    hourIdx.value = findFirstEnabledIndex(items);
+  }
+});
+
+watch(minutesList, (items) => {
+  if (!items.length) return;
+  if (!items[minuteIdx.value] || items[minuteIdx.value].disabled) {
+    minuteIdx.value = findFirstEnabledIndex(items);
+  }
+});
+
+watch(secondsList, (items) => {
+  if (!showSecondsUI.value || !items.length) return;
+  if (!items[secondIdx.value] || items[secondIdx.value].disabled) {
+    secondIdx.value = findFirstEnabledIndex(items);
+  }
+});
+
+watch(ampmList, (items) => {
+  if (!show12UI.value || !items.length) return;
+  if (!items[ampmIdx.value] || items[ampmIdx.value].disabled) {
+    ampmIdx.value = findFirstEnabledIndex(items);
+  }
+});
 
 /* ================================
  * Handlers

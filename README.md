@@ -2,8 +2,8 @@
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
-| Demo | Default | Dark |
-|------|---------|------|
+| Demo                                                                                     | Default                                                                                                   | Dark                                                                                                |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | ![Demo](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/demo.gif) | ![Default](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-default.png) | ![Dark](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-dark.png) |
 
 ![All themes](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-all.png)
@@ -39,15 +39,100 @@ const time = ref("14:30:00");
 
 ## Props
 
-| Prop         | Type                                 | Default     | Description                                                              |
-| ------------ | ------------------------------------ | ----------- | ------------------------------------------------------------------------ |
-| `modelValue` | `string \| [string, string] \| null` | `undefined` | Time value in `HH:mm:ss` format. Use a two-element array for range mode. |
-| `format`     | `TimeFormat`                         | `"HH:mm"`   | Display format (see format tokens below).                                |
-| `range`      | `boolean`                            | `false`     | Enable range selection with two time inputs.                             |
-| `hourStep`   | `number`                             | `1`         | Step interval for the hour column.                                       |
-| `minuteStep` | `number`                             | `1`         | Step interval for the minute column.                                     |
-| `secondStep` | `number`                             | `1`         | Step interval for the second column.                                     |
-| `size`       | `"sm" \| "md" \| "lg"`               | `"md"`     | Size preset that maps to CSS variables.                                  |
+| Prop             | Type                                   | Default     | Description                                                                             |
+| ---------------- | -------------------------------------- | ----------- | --------------------------------------------------------------------------------------- |
+| `modelValue`     | `string \| [string, string] \| null`   | `undefined` | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
+| `format`         | `TimeFormat`                           | `"HH:mm"`   | Display format (see format tokens below).                                               |
+| `range`          | `boolean`                              | `false`     | Enable range selection with two time inputs.                                            |
+| `disabled`       | `boolean`                              | `false`     | Disables the timepicker input(s) and prevents opening/selecting.                        |
+| `hourStep`       | `number`                               | `1`         | Step interval for the hour column.                                                      |
+| `minuteStep`     | `number`                               | `1`         | Step interval for the minute column.                                                    |
+| `secondStep`     | `number`                               | `1`         | Step interval for the second column.                                                    |
+| `minTime`        | `string`                               | `undefined` | Lower bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `maxTime`        | `string`                               | `undefined` | Upper bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `disabledTimes`  | `(string \| [string, string])[]`       | `undefined` | Disabled points/ranges in `HH:mm:ss`; e.g. `"12:00:00"` or `[["13:00:00","14:00:00"]]`. |
+| `isTimeDisabled` | `(time: InternalFormat) => boolean`    | `undefined` | Callback for custom disable rules. Return `true` to block a time.                       |
+| `size`           | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"`      | Size preset that maps to CSS variables.                                                 |
+
+## Validation API
+
+The component exposes a validation state and emits validation events for predictable form handling:
+
+- `update:validationState` emits one of: `"valid"`, `"invalid"`, `"out-of-range"`
+- `validate` emits payload:
+
+```ts
+{
+  target: "first" | "second";
+  state: "valid" | "invalid" | "out-of-range";
+  reason?: "BAD_TIME" | "OUT_OF_RANGE" | "DISABLED";
+  value: string | null; // always HH:mm:ss when present
+}
+```
+
+`out-of-range` means the value was outside `minTime`/`maxTime` and got clamped.
+`invalid` means bad/incomplete input or a blocked value from `disabledTimes`/`isTimeDisabled`.
+
+### Example
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+
+const time = ref("12:00:00");
+const validationState = ref<"valid" | "invalid" | "out-of-range">("valid");
+
+function onValidate(payload: {
+  state: "valid" | "invalid" | "out-of-range";
+  reason?: "BAD_TIME" | "OUT_OF_RANGE" | "DISABLED";
+}) {
+  console.log("validate", payload.state, payload.reason);
+}
+</script>
+
+<template>
+  <TimePicker
+    v-model="time"
+    v-model:validationState="validationState"
+    minTime="09:00:00"
+    maxTime="18:00:00"
+    @validate="onValidate"
+  />
+
+  <small>State: {{ validationState }}</small>
+</template>
+```
+
+### Range Example
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+
+const range = ref<[string, string]>(["09:00:00", "17:00:00"]);
+const validationState = ref<"valid" | "invalid" | "out-of-range">("valid");
+
+function onValidate(payload: {
+  target: "first" | "second";
+  state: "valid" | "invalid" | "out-of-range";
+  reason?: "BAD_TIME" | "OUT_OF_RANGE" | "DISABLED";
+}) {
+  console.log(payload.target, payload.state, payload.reason);
+}
+</script>
+
+<template>
+  <TimePicker
+    v-model="range"
+    :range="true"
+    v-model:validationState="validationState"
+    :disabled-times="[["12:00:00", "13:00:00"]]"
+    @validate="onValidate"
+  />
+
+  <small>State: {{ validationState }}</small>
+</template>
+```
 
 ## Format tokens
 
@@ -109,9 +194,11 @@ The dropdown columns will show values at the specified intervals (e.g. 00, 15, 3
 ```vue
 <template>
   <div class="sizes">
+    <TimePicker v-model="time" format="HH:mm" size="xs" />
     <TimePicker v-model="time" format="HH:mm" size="sm" />
     <TimePicker v-model="time" format="HH:mm" size="md" />
     <TimePicker v-model="time" format="HH:mm" size="lg" />
+    <TimePicker v-model="time" format="HH:mm" size="xl" />
   </div>
 </template>
 ```

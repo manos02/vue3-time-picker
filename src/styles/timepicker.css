@@ -51,6 +51,13 @@
 /* ===============================
  * Size presets
  * =============================== */
+.timepicker-shell[data-size="xs"] {
+  --vtp-font-size: 0.75rem;
+  --vtp-padding: 0.2rem 0.3rem;
+  --vtp-option-padding: 0.15rem 0.3rem;
+  --vtp-dropdown-radius: 0.35rem;
+}
+
 .timepicker-shell[data-size="sm"] {
   --vtp-font-size: 0.875rem;
   --vtp-padding: 0.25rem 0.375rem;
@@ -70,6 +77,13 @@
   --vtp-padding: 0.5rem 0.65rem;
   --vtp-option-padding: 0.4rem 0.65rem;
   --vtp-dropdown-radius: 0.6rem;
+}
+
+.timepicker-shell[data-size="xl"] {
+  --vtp-font-size: 1.25rem;
+  --vtp-padding: 0.6rem 0.8rem;
+  --vtp-option-padding: 0.5rem 0.8rem;
+  --vtp-dropdown-radius: 0.7rem;
 }
 
 /* ===============================
@@ -97,6 +111,15 @@
 .timepicker-shell__input--error {
   border-color: var(--vtp-error-border, #e74c3c);
   box-shadow: var(--vtp-error-ring, 0 0 0 2px rgba(231, 76, 60, 0.15));
+}
+
+.timepicker-shell__input--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.timepicker-shell__input--disabled .timepicker-field {
+  cursor: not-allowed;
 }
 
 /* Range separator "–" */

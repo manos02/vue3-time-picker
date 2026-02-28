@@ -2,6 +2,10 @@
 
 import { InternalFormat } from "./TimePicker/types";
 
+function toSeconds(time: InternalFormat): number {
+  return time.h * 3600 + time.m * 60 + time.s;
+}
+
 /** Check if format uses 12-hour clock (h or hh) */
 export function is12h(fmt: string): boolean {
   return /(a|A|p|P)/.test(fmt);
@@ -16,34 +20,18 @@ export function hasK(fmt: string): boolean {
 }
 
 /** Parse time string into { h, m, s } numbers */
-export function parseFromModel(str: string | null | undefined, fmt: string): { h: number; m: number; s: number } {
+export function parseFromModel(
+  str: string | null | undefined,
+  fmt: string,
+): { h: number; m: number; s: number } {
   if (!str) return { h: 0, m: 0, s: 0 };
 
-  
   const nums = str.match(/\d+/g) || []; // extract numbers
-  
+
   let h = nums[0] !== undefined ? +nums[0] : 0;
   const m = +nums[1] || 0;
   const s = +nums[2] || 0;
   return { h, m, s };
-  
-  // console.log(h, m, s,  fmt)
-  // // k/kk → (24 == midnight)
-  // if (hasK(fmt)) {
-  //   if (h === 24) h = 0;
-  //   // Check if it is 12h
-  // } else if (is12h(fmt)) {
-  //   if (isPm(fmt)) {
-  //     h = (h % 12) + 12;
-  //     console.log("yes")
-  //   } else {
-  //     h = h % 12;
-  //   }
-  // } else {
-  //   // default → 24h
-  //   h = h % 24;
-  // }
-  // console.log("h m s", h, m, s)
 }
 
 export function to12(h24: number) {
@@ -59,11 +47,8 @@ export function hasSeconds(fmt: string) {
   return /(s|ss)/.test(fmt);
 }
 
-
-
 export function formatTime(fmt: string, time: InternalFormat) {
-  let { h, m, s}  = time;
-
+  let { h, m, s } = time;
 
   const is12hFormat = is12h(fmt);
 
@@ -93,9 +78,35 @@ export function formatTime(fmt: string, time: InternalFormat) {
   return fmt.replace(/HH|hh|kk|mm|ss|H|h|k|m|s|A|a|P|p/g, (t) => map[t] ?? t);
 }
 
+export function compareTimes(a: InternalFormat, b: InternalFormat): number {
+  return toSeconds(a) - toSeconds(b);
+}
 
+export function clampTimeToBounds(
+  time: InternalFormat,
+  minTime?: InternalFormat | null,
+  maxTime?: InternalFormat | null,
+): InternalFormat {
+  if (minTime && compareTimes(time, minTime) < 0) return { ...minTime };
+  if (maxTime && compareTimes(time, maxTime) > 0) return { ...maxTime };
+  return { ...time };
+}
 
+export function isTimeWithinBounds(
+  time: InternalFormat,
+  minTime?: InternalFormat | null,
+  maxTime?: InternalFormat | null,
+): boolean {
+  if (minTime && compareTimes(time, minTime) < 0) return false;
+  if (maxTime && compareTimes(time, maxTime) > 0) return false;
+  return true;
+}
 
-
-
-
+export function isTimeInRanges(
+  time: InternalFormat,
+  ranges: Array<[InternalFormat, InternalFormat]>,
+): boolean {
+  return ranges.some(([start, end]) => {
+    return compareTimes(time, start) >= 0 && compareTimes(time, end) <= 0;
+  });
+}

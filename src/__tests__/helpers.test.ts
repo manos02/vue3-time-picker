@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import {
+  clampTimeToBounds,
+  compareTimes,
   is12h,
+  isTimeInRanges,
+  isTimeWithinBounds,
   isPm,
   hasK,
   parseFromModel,
@@ -9,6 +13,7 @@ import {
   hasSeconds,
   formatTime,
 } from "../helpers";
+import type { InternalFormat } from "../TimePicker/types";
 
 /* ─────────────────── is12h ─────────────────── */
 
@@ -201,5 +206,104 @@ describe("formatTime", () => {
     expect(formatTime("hh:mm:ss A", { h: 15, m: 45, s: 30 })).toBe(
       "03:45:30 PM",
     );
+  });
+});
+
+/* ─────────────────── compareTimes ─────────────────── */
+
+describe("compareTimes", () => {
+  it("returns 0 for equal times", () => {
+    expect(compareTimes({ h: 9, m: 30, s: 0 }, { h: 9, m: 30, s: 0 })).toBe(0);
+  });
+
+  it("returns negative when first time is earlier", () => {
+    expect(compareTimes({ h: 9, m: 29, s: 59 }, { h: 9, m: 30, s: 0 })).toBe(
+      -1,
+    );
+  });
+
+  it("returns positive when first time is later", () => {
+    expect(compareTimes({ h: 18, m: 0, s: 0 }, { h: 17, m: 59, s: 59 })).toBe(
+      1,
+    );
+  });
+});
+
+/* ─────────────────── clampTimeToBounds ─────────────────── */
+
+describe("clampTimeToBounds", () => {
+  const min = { h: 9, m: 15, s: 0 };
+  const max = { h: 17, m: 45, s: 30 };
+
+  it("clamps times below min to min", () => {
+    expect(clampTimeToBounds({ h: 8, m: 0, s: 0 }, min, max)).toEqual(min);
+  });
+
+  it("clamps times above max to max", () => {
+    expect(clampTimeToBounds({ h: 23, m: 0, s: 0 }, min, max)).toEqual(max);
+  });
+
+  it("keeps in-range times unchanged", () => {
+    expect(clampTimeToBounds({ h: 12, m: 30, s: 0 }, min, max)).toEqual({
+      h: 12,
+      m: 30,
+      s: 0,
+    });
+  });
+
+  it("works with only min bound", () => {
+    expect(clampTimeToBounds({ h: 7, m: 0, s: 0 }, min, null)).toEqual(min);
+  });
+
+  it("works with only max bound", () => {
+    expect(clampTimeToBounds({ h: 19, m: 0, s: 0 }, null, max)).toEqual(max);
+  });
+});
+
+/* ─────────────────── isTimeWithinBounds ─────────────────── */
+
+describe("isTimeWithinBounds", () => {
+  const min = { h: 9, m: 15, s: 0 };
+  const max = { h: 17, m: 45, s: 30 };
+
+  it("returns false below min", () => {
+    expect(isTimeWithinBounds({ h: 9, m: 14, s: 59 }, min, max)).toBe(false);
+  });
+
+  it("returns false above max", () => {
+    expect(isTimeWithinBounds({ h: 17, m: 45, s: 31 }, min, max)).toBe(false);
+  });
+
+  it("returns true at boundaries", () => {
+    expect(isTimeWithinBounds(min, min, max)).toBe(true);
+    expect(isTimeWithinBounds(max, min, max)).toBe(true);
+  });
+
+  it("returns true with no bounds", () => {
+    expect(isTimeWithinBounds({ h: 2, m: 0, s: 0 }, null, null)).toBe(true);
+  });
+});
+
+/* ─────────────────── isTimeInRanges ─────────────────── */
+
+describe("isTimeInRanges", () => {
+  const ranges: Array<[InternalFormat, InternalFormat]> = [
+    [
+      { h: 9, m: 0, s: 0 },
+      { h: 10, m: 30, s: 0 },
+    ],
+    [
+      { h: 14, m: 0, s: 0 },
+      { h: 15, m: 0, s: 0 },
+    ],
+  ] as const;
+
+  it("returns true when time is inside a disabled range", () => {
+    expect(isTimeInRanges({ h: 9, m: 45, s: 0 }, ranges)).toBe(true);
+    expect(isTimeInRanges({ h: 15, m: 0, s: 0 }, ranges)).toBe(true);
+  });
+
+  it("returns false when time is outside all ranges", () => {
+    expect(isTimeInRanges({ h: 12, m: 0, s: 0 }, ranges as any)).toBe(false);
   });
 });

@@ -22,6 +22,21 @@ type WithSecondsAmPM = `${WithSeconds}${AmPmToken}`;
 export type TimeFormat = Base | WithSeconds | WithAmPM | WithSecondsAmPM;
 
 export type InternalFormat = { h: number; m: number; s: number }; // internal time
+export type DisabledTimeInput = string | [string, string];
+export type ValidationState = "valid" | "invalid" | "out-of-range";
+export type ValidationReason = "BAD_TIME" | "OUT_OF_RANGE" | "DISABLED";
+
+function isValidDisabledTimeEntry(entry: DisabledTimeInput): boolean {
+  if (typeof entry === "string") return TIME_SHAPE.test(entry);
+  if (Array.isArray(entry)) {
+    return (
+      entry.length === 2 &&
+      TIME_SHAPE.test(entry[0] ?? "") &&
+      TIME_SHAPE.test(entry[1] ?? "")
+    );
+  }
+  return false;
+}
 
 export const FORMAT_SHAPE =
   /^(HH|H|hh|h|kk|k):(mm|m)(?::(ss|s))?(?:\s*(A|a|P|p))?$/;
@@ -31,8 +46,8 @@ const isDev =
   typeof __DEV__ !== "undefined"
     ? __DEV__
     : typeof process !== "undefined" &&
-        process.env &&
-        process.env.NODE_ENV !== "production";
+      process.env &&
+      process.env.NODE_ENV !== "production";
 
 export const timePickerProps = {
   modelValue: {
@@ -57,9 +72,52 @@ export const timePickerProps = {
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
   hourStep: { type: Number, default: 1 },
   minuteStep: { type: Number, default: 1 },
   secondStep: { type: Number, default: 1 },
+  minTime: {
+    type: String as PropType<string | undefined>,
+    default: undefined,
+    validator: (v?: string) => {
+      const ok = v == undefined || TIME_SHAPE.test(v);
+      if (!ok && isDev) {
+        console.error(`[VueTimepicker] \`minTime\` is wrong. Received: ${v}`);
+      }
+      return ok;
+    },
+  },
+  maxTime: {
+    type: String as PropType<string | undefined>,
+    default: undefined,
+    validator: (v?: string) => {
+      const ok = v == undefined || TIME_SHAPE.test(v);
+      if (!ok && isDev) {
+        console.error(`[VueTimepicker] \`maxTime\` is wrong. Received: ${v}`);
+      }
+      return ok;
+    },
+  },
+  disabledTimes: {
+    type: Array as PropType<ReadonlyArray<DisabledTimeInput> | undefined>,
+    default: undefined,
+    validator: (v?: ReadonlyArray<DisabledTimeInput>) => {
+      const ok = v == undefined || v.every(isValidDisabledTimeEntry);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`disabledTimes\` is wrong. Received: ${JSON.stringify(v)}`,
+        );
+      }
+      return ok;
+    },
+  },
+  isTimeDisabled: {
+    type: Function as PropType<(time: InternalFormat) => boolean>,
+    default: undefined,
+  },
   format: {
     type: String as PropType<TimeFormat>,
     default: "HH:mm",
@@ -74,10 +132,11 @@ export const timePickerProps = {
     },
   },
   size: {
-    type: String as PropType<"sm" | "md" | "lg">,
+    type: String as PropType<"xs" | "sm" | "md" | "lg" | "xl">,
     default: "md",
     validator: (v: string) => {
-      const ok = v === "sm" || v === "md" || v === "lg";
+      const ok =
+        v === "xs" || v === "sm" || v === "md" || v === "lg" || v === "xl";
       if (!ok && isDev) {
         console.error(`[VueTimepicker] \`size\` is wrong. Received: ${v}`);
       }
@@ -133,12 +192,19 @@ export type TimeSelectionProps = ExtractPropTypes<typeof TimeSelectionProps>;
 
 export interface TimePickerEmits {
   (e: "update:modelValue", v: string | [string, string] | null): void;
+  (e: "update:validationState", v: ValidationState): void;
+  (
+    e: "validate",
+    payload: {
+      target: "first" | "second";
+      state: ValidationState;
+      reason?: ValidationReason;
+      value: string | null;
+    },
+  ): void;
   (e: "open"): void;
   (e: "close"): void;
-  (
-    e: "error",
-    payload: { code: "BAD_TIME" | "OUT_OF_RANGE"; message: string },
-  ): void;
+  (e: "error", payload: { code: ValidationReason; message: string }): void;
 }
 
 export type Item = {
