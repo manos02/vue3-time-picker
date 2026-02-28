@@ -1,0 +1,50 @@
+name: Publish to npm
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build package
+        run: npm run build
+
+      - name: Check if version exists on npm
+        id: version_check
+        run: |
+          PKG_NAME=$(node -p "require('./package.json').name")
+          PKG_VERSION=$(node -p "require('./package.json').version")
+
+          if npm view "$PKG_NAME@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Version $PKG_VERSION already exists on npm for $PKG_NAME. Skipping publish."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Version $PKG_VERSION does not exist on npm for $PKG_NAME. Publishing..."
+          fi
+
+      - name: Publish to npm
+        if: steps.version_check.outputs.exists == 'false'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

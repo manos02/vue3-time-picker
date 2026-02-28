@@ -38,6 +38,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "prepublishOnly": "npm run build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
