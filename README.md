@@ -1,5 +1,7 @@
 # Vue3 Timepicker
 
+[![Live Playground](https://img.shields.io/badge/Live-Playground-4f46e5?style=for-the-badge&logo=storybook&logoColor=white)](https://manos02.github.io/vue3-time-picker/)
+
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
 
 | Demo                                                                                     | Default                                                                                                   | Dark                                                                                                |
@@ -36,6 +38,22 @@ const time = ref("14:30:00");
   <TimePicker v-model="time" format="HH:mm:ss" />
 </template>
 ```
+
+## Interactive Playground (Storybook)
+
+Run Storybook locally and experiment with all props via controls:
+
+```bash
+npm run storybook
+```
+
+Build static Storybook:
+
+```bash
+npm run build-storybook
+```
+
+The repository includes [storybook deploy workflow](.github/workflows/storybook.yml) to publish Storybook to GitHub Pages on push to `main`.
 
 ## Props
 
