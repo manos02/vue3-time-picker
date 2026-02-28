@@ -1,10 +1,9 @@
 # Vue3 Timepicker
 
-[![Live Playground](https://img.shields.io/badge/Live-Playground-4f46e5?style=for-the-badge&logo=storybook&logoColor=white)](https://manos02.github.io/vue3-time-picker/)
+[![Live Playground](https://img.shields.io/badge/Live-Playground-4f46e5?style=for-the-badge&logo=storybook&logoColor=white)](https://manos02.github.io/vue3-time-picker/) [![npm version](https://img.shields.io/npm/v/@manik02/vue3-timepicker?style=for-the-badge)](https://www.npmjs.com/package/@manik02/vue3-timepicker) [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 A flexible, customisable timepicker component for Vue 3 with TypeScript support.
-
-| Demo                                                                                     | Default                                                                                                   | Dark                                                                                                |
+| Demo | Default | Dark |
 | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | ![Demo](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/demo.gif) | ![Default](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-default.png) | ![Dark](https://raw.githubusercontent.com/manos02/vue3-time-picker/main/assets/screenshot-dark.png) |
 
