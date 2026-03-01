@@ -63,6 +63,10 @@ The repository includes [storybook deploy workflow](.github/workflows/storybook.
 | `modelValue`     | `string \| [string, string] \| null`   | `undefined`     | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
 | `format`         | `TimeFormat`                           | `"HH:mm"`       | Display format (see format tokens below).                                               |
 | `placeholder`    | `string`                               | `"Select time"` | Placeholder text shown when input is empty.                                             |
+| `inputWidth`     | `string \| number`                     | `undefined`     | Width for each input field. Number values are treated as `px`.                          |
+| `minInputWidth`  | `string \| number`                     | `undefined`     | Minimum width for each input field. Number values are treated as `px`.                  |
+| `maxInputWidth`  | `string \| number`                     | `undefined`     | Maximum width for each input field. Number values are treated as `px`.                  |
+| `componentWidth` | `string \| number`                     | `undefined`     | Width of the outer component shell. Number values are treated as `px`.                  |
 | `range`          | `boolean`                              | `false`         | Enable range selection with two time inputs.                                            |
 | `disabled`       | `boolean`                              | `false`         | Disables the timepicker input(s) and prevents opening/selecting.                        |
 | `hourStep`       | `number`                               | `1`             | Step interval for the hour column.                                                      |
@@ -225,6 +229,27 @@ The dropdown columns will show values at the specified intervals (e.g. 00, 15, 3
 
 Each preset sets a handful of CSS custom properties (`--vtp-font-size`, `--vtp-padding`, `--vtp-option-padding`, `--vtp-dropdown-radius`). You can still override any of them manually.
 
+## Width control
+
+The component keeps a smart default width based on `format`/`placeholder`, but you can override it when needed.
+
+```vue
+<TimePicker
+  v-model="time"
+  format="HH:mm:ss"
+  :input-width="220"
+  min-input-width="12ch"
+  max-input-width="320px"
+  component-width="100%"
+/>
+```
+
+Width precedence for each input field:
+
+1. `inputWidth` prop
+2. `--vtp-input-width` CSS variable
+3. Built-in heuristic (`6ch` to `20ch`, based on `format`/`placeholder`)
+
 ## CSS custom properties
 
 Style the component by setting CSS custom properties on `.timepicker-shell` or any ancestor element.
@@ -242,6 +267,10 @@ Style the component by setting CSS custom properties on `.timepicker-shell` or a
   --vtp-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.2);
   --vtp-error-border: #ef4444;
   --vtp-error-ring: 0 0 0 3px rgba(239, 68, 68, 0.15);
+  --vtp-component-width: auto;
+  --vtp-input-width: 12ch;
+  --vtp-input-min-width: 0;
+  --vtp-input-max-width: none;
   --vtp-separator-color: #9ca3af;
   --vtp-dropdown-bg: #fff;
   --vtp-dropdown-border: #e5e7eb;

@@ -9,6 +9,10 @@ const meta = {
   args: {
     format: "HH:mm:ss",
     range: false,
+    inputWidth: undefined,
+    minInputWidth: undefined,
+    maxInputWidth: undefined,
+    componentWidth: undefined,
     size: "md",
     disabled: false,
     hourStep: 1,
@@ -134,6 +138,8 @@ export const FeatureGallery: Story = {
       const callbackBlocked = ref("09:15:00");
       const disabledValue = ref("16:30:00");
       const range = ref<[string, string]>(["09:30:00", "17:00:00"]);
+      const emptyStart = ref<string | null>(null);
+      const styledWidth = ref("11:20:00");
       const validationState = ref<"valid" | "invalid" | "out-of-range">(
         "valid",
       );
@@ -147,6 +153,8 @@ export const FeatureGallery: Story = {
         callbackBlocked,
         disabledValue,
         range,
+        emptyStart,
+        styledWidth,
         validationState,
         isDisabled: (value: { h: number; m: number }) =>
           value.m === 45 || (value.h >= 11 && value.h <= 12),
@@ -170,6 +178,8 @@ export const FeatureGallery: Story = {
         <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;"><p style="margin:0 0 8px;font-size:12px;opacity:.75;">Callback disabled rule</p><TimePicker v-model="callbackBlocked" format="HH:mm" :is-time-disabled="isDisabled" v-model:validationState="validationState" /></div>
         <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;"><p style="margin:0 0 8px;font-size:12px;opacity:.75;">Disabled state</p><TimePicker v-model="disabledValue" format="HH:mm:ss" :disabled="true" /></div>
         <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;"><p style="margin:0 0 8px;font-size:12px;opacity:.75;">Range + validation</p><TimePicker v-model="range" :range="true" format="HH:mm" :minute-step="15" v-model:validationState="validationState" /></div>
+        <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;"><p style="margin:0 0 8px;font-size:12px;opacity:.75;">Empty initial value (null)</p><TimePicker v-model="emptyStart" format="HH:mm:ss" placeholder="Start empty" /></div>
+        <div style="padding:10px;border:1px solid #e5e7eb;border-radius:8px;"><p style="margin:0 0 8px;font-size:12px;opacity:.75;">Width + size + placeholder</p><TimePicker v-model="styledWidth" format="hh:mm A" size="lg" :minute-step="5" input-width="16ch" min-input-width="14ch" placeholder="Meeting time" /></div>
       </div>
     `,
   }),
@@ -184,10 +194,13 @@ export const ThemedWithCssVariables: Story = {
       const mint = ref("10:15:00");
       const rose = ref("14:20:00");
       const mono = ref("21:05:00");
-      return { light, dark, mint, rose, mono };
+      const ocean = ref("06:40:00");
+      const amber = ref("17:10:00");
+      const violet = ref("11:55:00");
+      return { light, dark, mint, rose, mono, ocean, amber, violet };
     },
     template: `
-      <div style="display: grid; gap: 16px; min-width: 520px; padding: 12px;">
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 16px; min-width: 720px; padding: 12px;">
         <div
           style="padding: 12px; border-radius: 10px; background: #fff7ed; --vtp-bg: #fff7ed; --vtp-color: #7c2d12; --vtp-border: #fb923c; --vtp-focus-border: #f97316; --vtp-option-active-bg: #f97316; --vtp-option-active-color: #fff7ed;"
         >
@@ -221,6 +234,27 @@ export const ThemedWithCssVariables: Story = {
         >
           <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.8;">Monochrome Theme</p>
           <TimePicker v-model="mono" format="kk:mm" size="xs" />
+        </div>
+
+        <div
+          style="padding: 12px; border-radius: 10px; background: #eff6ff; --vtp-bg: #eff6ff; --vtp-color: #1e3a8a; --vtp-border: #60a5fa; --vtp-focus-border: #2563eb; --vtp-dropdown-bg: #dbeafe; --vtp-option-hover-bg: #bfdbfe; --vtp-option-active-bg: #2563eb; --vtp-option-active-color: #eff6ff;"
+        >
+          <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.8;">Ocean Theme</p>
+          <TimePicker v-model="ocean" format="HH:mm:ss" size="sm" />
+        </div>
+
+        <div
+          style="padding: 12px; border-radius: 10px; background: #fffbeb; --vtp-bg: #fffbeb; --vtp-color: #78350f; --vtp-border: #f59e0b; --vtp-focus-border: #d97706; --vtp-dropdown-bg: #fef3c7; --vtp-option-hover-bg: #fde68a; --vtp-option-active-bg: #d97706; --vtp-option-active-color: #fffbeb;"
+        >
+          <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.8;">Amber Theme</p>
+          <TimePicker v-model="amber" format="HH:mm" size="md" :minute-step="5" />
+        </div>
+
+        <div
+          style="padding: 12px; border-radius: 10px; background: #f5f3ff; --vtp-bg: #f5f3ff; --vtp-color: #4c1d95; --vtp-border: #a78bfa; --vtp-focus-border: #7c3aed; --vtp-dropdown-bg: #ede9fe; --vtp-option-hover-bg: #ddd6fe; --vtp-option-active-bg: #7c3aed; --vtp-option-active-color: #f5f3ff;"
+        >
+          <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.8;">Violet Theme</p>
+          <TimePicker v-model="violet" format="hh:mm A" size="lg" />
         </div>
       </div>
     `,

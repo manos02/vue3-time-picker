@@ -12,7 +12,7 @@
 import { ref, computed, nextTick, type Ref, type ComputedRef } from "vue";
 import { FORMAT_SHAPE } from "./types";
 import type { InternalFormat } from "./types";
-import { is12h, hasK } from "../helpers";
+import { hasK } from "../helpers";
 
 /* ──────────────────────────────────────────────────────────
  * Internal types
@@ -83,7 +83,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
   /** Reactive display value – bind with  :value="inputValue"  */
   const inputValue = ref("");
 
-  /* ── Rendering ─────────────────────────────────────── */
+  /* ================================
+   * Rendering
+   * ================================ */
 
   function render(): string {
     const { digitGroups, hasAmPm: showAmPm } = parsed.value;
@@ -114,7 +116,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     return out;
   }
 
-  /* ── Validation / clamping ─────────────────────────── */
+  /* ================================
+   * Validation and clamping
+   * ================================ */
 
   function clampGroup(groupIndex: number): void {
     const offset = groupIndex * 2;
@@ -136,7 +140,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     }
   }
 
-  /* ── Cursor ↔ digit-index mapping ────────────────── */
+  /* ================================
+   * Cursor / digit index mapping
+   * ================================ */
 
   /** How many digits appear before a given display-string position */
   function displayPosToDigitIndex(pos: number): number {
@@ -155,7 +161,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     return di + Math.floor(di / 2);
   }
 
-  /* ── Smart digit replacement (overwrite-only) ─────── */
+  /* ================================
+   * Overwrite-only digit replacement
+   * ================================ */
 
   function replaceDigitAt(pos: number, digit: number): number {
     if (pos >= totalDigits.value) return totalDigits.value;
@@ -168,7 +176,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     return Math.min(pos + 1, totalDigits.value);
   }
 
-  /* ── DOM helpers ───────────────────────────────────── */
+  /* ================================
+   * DOM synchronization helpers
+   * ================================ */
 
   function syncDom(el: HTMLInputElement, cursorDigitIndex?: number): void {
     const s = render();
@@ -191,7 +201,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     });
   }
 
-  /* ── Event handlers ────────────────────────────────── */
+  /* ================================
+   * Event handlers
+   * ================================ */
 
   function handleKeydown(e: KeyboardEvent): void {
     const key = e.key;
@@ -292,7 +304,9 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     syncDom(el, pos);
   }
 
-  /* ── External sync ─────────────────────────────────── */
+  /* ================================
+   * External synchronization
+   * ================================ */
 
   /** Populate the mask from an InternalFormat (e.g. when the column
    *  picker updates the selected time). */

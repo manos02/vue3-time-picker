@@ -45,6 +45,10 @@ import {
   to24,
 } from "../helpers";
 
+function normalizeStep(step: number | undefined): number {
+  return Math.max(1, step ?? 1);
+}
+
 const show12UI = computed(() => is12h(props.format));
 const showSecondsUI = computed(() => hasSeconds(props.format));
 const isKFormat = computed(() => hasK(props.format));
@@ -83,7 +87,7 @@ const openLocal = computed({
 });
 
 /* ================================
- * Open/close & outside click
+ * Open / close interactions
  * ================================ */
 const root = ref<HTMLElement | null>(null);
 
@@ -111,13 +115,17 @@ const hourIdx = ref(Math.floor(props.initTime.h / props.hourStep!) || 0);
 const minuteIdx = ref(Math.floor(props.initTime.m / props.minuteStep!) || 0);
 const secondIdx = ref(Math.floor(props.initTime.s / props.secondStep!) || 0);
 
+/* ================================
+ * External model -> internal indices
+ * ================================ */
+
 // Keep indices in sync when initTime changes externally (e.g. typed input)
 watch(
   () => props.initTime,
   (t) => {
-    const hStep = Math.max(1, props.hourStep!);
-    const mStep = Math.max(1, props.minuteStep!);
-    const sStep = Math.max(1, props.secondStep!);
+    const hStep = normalizeStep(props.hourStep);
+    const mStep = normalizeStep(props.minuteStep);
+    const sStep = normalizeStep(props.secondStep);
 
     let hForIdx = t.h;
     if (show12UI.value) {
@@ -135,14 +143,14 @@ watch(
 );
 function makeList(max: number, step: number): Item[] {
   const arr: Item[] = [];
-  for (let i = 0; i < max; i += Math.max(1, step)) {
+  for (let i = 0; i < max; i += normalizeStep(step)) {
     arr.push({ key: i, value: i, text: String(i).padStart(2, "0") });
   }
   return arr;
 }
 
 function make12HourList(isPm: boolean, step: number): Item[] {
-  const s = Math.max(1, step);
+  const s = normalizeStep(step);
   const arr: Item[] = [];
   for (let i = 0; i < 12; i += s) {
     const h12 = i === 0 ? 12 : i; // label: 12,1..11
@@ -153,7 +161,7 @@ function make12HourList(isPm: boolean, step: number): Item[] {
 }
 
 function makeKHourList(step: number): Item[] {
-  const s = Math.max(1, step);
+  const s = normalizeStep(step);
   const arr: Item[] = [];
   for (let i = 0; i < 24; i += s) {
     const kFormat = i === 0 ? 24 : i; // label: 24,1..23
@@ -306,32 +314,41 @@ const secondVal = computed(() =>
   Number(baseSecondsList.value[secondIdx.value]?.value ?? 0),
 );
 
-watch(hoursList, (items) => {
+function syncIndexWithEnabledItems(
+  items: Item[],
+  currentIndex: number,
+  updateIndex: (next: number) => void,
+) {
   if (!items.length) return;
-  if (!items[hourIdx.value] || items[hourIdx.value].disabled) {
-    hourIdx.value = findFirstEnabledIndex(items);
+  if (!items[currentIndex] || items[currentIndex].disabled) {
+    updateIndex(findFirstEnabledIndex(items));
   }
+}
+
+watch(hoursList, (items) => {
+  syncIndexWithEnabledItems(items, hourIdx.value, (next) => {
+    hourIdx.value = next;
+  });
 });
 
 watch(minutesList, (items) => {
-  if (!items.length) return;
-  if (!items[minuteIdx.value] || items[minuteIdx.value].disabled) {
-    minuteIdx.value = findFirstEnabledIndex(items);
-  }
+  syncIndexWithEnabledItems(items, minuteIdx.value, (next) => {
+    minuteIdx.value = next;
+  });
 });
 
 watch(secondsList, (items) => {
   if (!showSecondsUI.value || !items.length) return;
-  if (!items[secondIdx.value] || items[secondIdx.value].disabled) {
-    secondIdx.value = findFirstEnabledIndex(items);
-  }
+  syncIndexWithEnabledItems(items, secondIdx.value, (next) => {
+    secondIdx.value = next;
+  });
 });
 
 watch(ampmList, (items) => {
   if (!show12UI.value || !items.length) return;
-  if (!items[ampmIdx.value] || items[ampmIdx.value].disabled) {
-    ampmIdx.value = findFirstEnabledIndex(items);
-  }
+  syncIndexWithEnabledItems(items, ampmIdx.value, (next) => {
+    ampmIdx.value = next;
+  });
 });
 
 /* ================================

@@ -38,6 +38,12 @@ function isValidDisabledTimeEntry(entry: DisabledTimeInput): boolean {
   return false;
 }
 
+function isValidCssSizeValue(value: unknown): boolean {
+  return (
+    value == undefined || typeof value === "string" || typeof value === "number"
+  );
+}
+
 export const FORMAT_SHAPE =
   /^(HH|H|hh|h|kk|k):(mm|m)(?::(ss|s))?(?:\s*(A|a|P|p))?$/;
 export const TIME_SHAPE = /^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
@@ -134,6 +140,58 @@ export const timePickerProps = {
   placeholder: {
     type: String,
     default: "Select time",
+  },
+  inputWidth: {
+    type: [String, Number] as PropType<string | number | undefined>,
+    default: undefined,
+    validator: (v?: string | number) => {
+      const ok = isValidCssSizeValue(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`inputWidth\` must be a string or number. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  componentWidth: {
+    type: [String, Number] as PropType<string | number | undefined>,
+    default: undefined,
+    validator: (v?: string | number) => {
+      const ok = isValidCssSizeValue(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`componentWidth\` must be a string or number. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  minInputWidth: {
+    type: [String, Number] as PropType<string | number | undefined>,
+    default: undefined,
+    validator: (v?: string | number) => {
+      const ok = isValidCssSizeValue(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`minInputWidth\` must be a string or number. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  maxInputWidth: {
+    type: [String, Number] as PropType<string | number | undefined>,
+    default: undefined,
+    validator: (v?: string | number) => {
+      const ok = isValidCssSizeValue(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`maxInputWidth\` must be a string or number. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
   },
   size: {
     type: String as PropType<"xs" | "sm" | "md" | "lg" | "xl">,

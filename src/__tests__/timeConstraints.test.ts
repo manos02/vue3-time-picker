@@ -20,6 +20,41 @@ async function typeDigits(
 }
 
 describe("time constraints (minTime/maxTime)", () => {
+  it("does not set width CSS variables by default", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: null,
+        format: "HH:mm",
+      },
+    });
+
+    const shell = wrapper.find(".timepicker-shell");
+    const shellStyle = shell.attributes("style") ?? "";
+    expect(shellStyle).not.toContain("--vtp-input-width");
+    expect(shellStyle).not.toContain("--vtp-component-width");
+  });
+
+  it("applies width props as CSS variables on the shell", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: "12:00:00",
+        format: "HH:mm",
+        componentWidth: "100%",
+        inputWidth: 240,
+        minInputWidth: "12ch",
+        maxInputWidth: 360,
+      },
+    });
+
+    const shell = wrapper.find(".timepicker-shell");
+    const shellStyle = shell.attributes("style") ?? "";
+
+    expect(shellStyle).toContain("--vtp-component-width: 100%");
+    expect(shellStyle).toContain("--vtp-input-width: 240px");
+    expect(shellStyle).toContain("--vtp-input-min-width: 12ch");
+    expect(shellStyle).toContain("--vtp-input-max-width: 360px");
+  });
+
   it("keeps single input empty when modelValue is null", () => {
     const wrapper = mount(TimePicker, {
       props: {

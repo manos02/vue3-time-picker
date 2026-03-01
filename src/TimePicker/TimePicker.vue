@@ -4,54 +4,30 @@
     :data-size="props.size"
     :data-validation="validationState"
     :data-disabled="props.disabled ? 'true' : 'false'"
+    :style="shellStyle"
   >
-    <!-- Input / trigger -->
+    <div
+      class="timepicker-shell__input"
+      :class="{
+        'timepicker-shell__input--error': lastErrorCode,
+        'timepicker-shell__input--disabled': props.disabled,
+      }"
+    >
+      <input
+        type="text"
+        class="timepicker-field"
+        :value="firstInputValue"
+        :placeholder="placeholderText"
+        :style="fieldStyle"
+        :disabled="props.disabled"
+        @focus="!props.disabled && (openFirst = true)"
+        @keydown="onFirstKeydown"
+        @input="firstMask.handleInput"
+        @paste="firstMask.handlePaste"
+        @blur="!props.disabled && commitMaskedTime('first')"
+      />
 
-    <template v-if="!props.range">
-      <div
-        class="timepicker-shell__input"
-        :class="{
-          'timepicker-shell__input--error': lastErrorCode,
-          'timepicker-shell__input--disabled': props.disabled,
-        }"
-      >
-        <input
-          type="text"
-          class="timepicker-field"
-          :value="firstInputValue"
-          :placeholder="placeholderText"
-          :style="{ width: fieldWidth }"
-          :disabled="props.disabled"
-          @focus="!props.disabled && (openFirst = true)"
-          @keydown="onFirstKeydown"
-          @input="firstMask.handleInput"
-          @paste="firstMask.handlePaste"
-          @blur="!props.disabled && commitMaskedTime('first')"
-        />
-      </div>
-    </template>
-
-    <template v-else>
-      <div
-        class="timepicker-shell__input"
-        :class="{
-          'timepicker-shell__input--error': lastErrorCode,
-          'timepicker-shell__input--disabled': props.disabled,
-        }"
-      >
-        <input
-          type="text"
-          class="timepicker-field"
-          :value="firstInputValue"
-          :placeholder="placeholderText"
-          :style="{ width: fieldWidth }"
-          :disabled="props.disabled"
-          @focus="!props.disabled && (openFirst = true)"
-          @keydown="onFirstKeydown"
-          @input="firstMask.handleInput"
-          @paste="firstMask.handlePaste"
-          @blur="!props.disabled && commitMaskedTime('first')"
-        />
+      <template v-if="props.range">
         <span class="timepicker-separator">–</span>
         <input
           ref="secondInputRef"
@@ -59,7 +35,7 @@
           class="timepicker-field"
           :value="secondInputValue"
           :placeholder="placeholderText"
-          :style="{ width: fieldWidth }"
+          :style="fieldStyle"
           :disabled="props.disabled"
           @focus="!props.disabled && (openSecond = true)"
           @keydown="onSecondKeydown"
@@ -67,8 +43,8 @@
           @paste="secondMask.handlePaste"
           @blur="!props.disabled && commitMaskedTime('second')"
         />
-      </div>
-    </template>
+      </template>
+    </div>
 
     <!-- Columns -->
     <div>
@@ -101,7 +77,6 @@
       />
     </div>
   </div>
-  <!-- </div> -->
 </template>
 
 <script setup lang="ts">
@@ -125,6 +100,8 @@ import {
 } from "../helpers";
 import { useTimeMask } from "./useTimeMask";
 
+type Target = "first" | "second";
+
 const lastErrorCode = ref<string | null>(null);
 /* ================================
  * Props & emits
@@ -137,28 +114,38 @@ const openSecond = ref(false);
 const firstValidation = ref<ValidationState>("valid");
 const secondValidation = ref<ValidationState>("valid");
 
+function closeAllDropdowns() {
+  openFirst.value = false;
+  openSecond.value = false;
+}
+
+function handleOpenToggle(target: Target, isOpen: boolean) {
+  if (props.disabled && isOpen) {
+    closeAllDropdowns();
+    return;
+  }
+
+  if (!isOpen) return;
+  if (target === "first") {
+    openSecond.value = false;
+  } else {
+    openFirst.value = false;
+  }
+}
+
 // Ensure only one dropdown is open at a time
 watch(openFirst, (v) => {
-  if (props.disabled && v) {
-    openFirst.value = false;
-    return;
-  }
-  if (v) openSecond.value = false;
+  handleOpenToggle("first", v);
 });
 watch(openSecond, (v) => {
-  if (props.disabled && v) {
-    openSecond.value = false;
-    return;
-  }
-  if (v) openFirst.value = false;
+  handleOpenToggle("second", v);
 });
 
 watch(
   () => props.disabled,
   (isDisabled) => {
     if (!isDisabled) return;
-    openFirst.value = false;
-    openSecond.value = false;
+    closeAllDropdowns();
   },
 );
 
@@ -223,7 +210,7 @@ function isDisabledByRules(time: InternalFormat): boolean {
   return false;
 }
 
-function getCurrentTargetValue(target: "first" | "second"): InternalFormat {
+function getCurrentTargetValue(target: Target): InternalFormat {
   if (target === "first") {
     if (Array.isArray(init.value)) return init.value[0];
     return init.value;
@@ -232,7 +219,7 @@ function getCurrentTargetValue(target: "first" | "second"): InternalFormat {
   return init.value;
 }
 
-function hasTargetValue(target: "first" | "second"): boolean {
+function hasTargetValue(target: Target): boolean {
   const value = props.modelValue;
 
   if (Array.isArray(value)) {
@@ -243,7 +230,7 @@ function hasTargetValue(target: "first" | "second"): boolean {
   return typeof value === "string" && value.length > 0;
 }
 
-function setTargetValue(target: "first" | "second", next: InternalFormat) {
+function setTargetValue(target: Target, next: InternalFormat) {
   if (target === "first") {
     if (Array.isArray(init.value)) {
       init.value = [next, init.value[1]];
@@ -323,7 +310,7 @@ function clampToBounds(time: InternalFormat): InternalFormat {
 }
 
 function applyTime(
-  target: "first" | "second",
+  target: Target,
   time: InternalFormat,
   options: { emitValidation: boolean },
 ) {
@@ -375,15 +362,9 @@ const secondInit = computed<InternalFormat>({
   },
 });
 
-// Display the selected time(s) in the input
-const display = computed(() => {
-  if (!props.modelValue) return "—";
-  const fmt = (c: InternalFormat) => formatTime(props.format!, c);
-  if (props.range) {
-    return `${fmt(firstInit.value)} → ${fmt(secondInit.value)}`;
-  }
-  return fmt(firstInit.value);
-});
+/* ================================
+ * Model shape guards
+ * ================================ */
 
 watch(
   () => props.range,
@@ -407,43 +388,46 @@ watch(
   { immediate: true },
 );
 
+function revalidateExistingTargets() {
+  if (hasTargetValue("first")) {
+    applyTime("first", getCurrentTargetValue("first"), {
+      emitValidation: true,
+    });
+  }
+
+  if (props.range && hasTargetValue("second")) {
+    applyTime("second", getCurrentTargetValue("second"), {
+      emitValidation: true,
+    });
+  }
+}
+
 watch(
   () => [effectiveMinBound.value, effectiveMaxBound.value, props.range],
-  () => {
-    if (hasTargetValue("first")) {
-      applyTime("first", getCurrentTargetValue("first"), {
-        emitValidation: true,
-      });
-    }
-    if (props.range && hasTargetValue("second")) {
-      applyTime("second", getCurrentTargetValue("second"), {
-        emitValidation: true,
-      });
-    }
-  },
+  revalidateExistingTargets,
   { immediate: true },
 );
 
 watch(
   () => [disabledRanges.value, props.isTimeDisabled, props.range],
-  () => {
-    if (hasTargetValue("first")) {
-      applyTime("first", getCurrentTargetValue("first"), {
-        emitValidation: true,
-      });
-    }
-    if (props.range && hasTargetValue("second")) {
-      applyTime("second", getCurrentTargetValue("second"), {
-        emitValidation: true,
-      });
-    }
-  },
+  revalidateExistingTargets,
   { immediate: true },
 );
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
 const placeholderText = computed(() => props.placeholder ?? "Select time");
-const fieldWidth = computed(() => {
+
+function toCssLength(value: string | number | undefined): string | undefined {
+  if (value == undefined) return undefined;
+  if (typeof value === "number") return `${value}px`;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+/* ================================
+ * Input width heuristic
+ * ================================ */
+const heuristicFieldWidth = computed(() => {
   let length = Math.max(
     resolvedFormat.value.length,
     placeholderText.value.length,
@@ -455,12 +439,38 @@ const fieldWidth = computed(() => {
   return `${Math.min(20, Math.max(6, length))}ch`;
 });
 
+const shellStyle = computed(() => {
+  const style: Record<string, string> = {};
+
+  const componentWidth = toCssLength(props.componentWidth);
+  const inputWidth = toCssLength(props.inputWidth);
+  const minInputWidth = toCssLength(props.minInputWidth);
+  const maxInputWidth = toCssLength(props.maxInputWidth);
+
+  if (componentWidth) style["--vtp-component-width"] = componentWidth;
+  if (inputWidth) style["--vtp-input-width"] = inputWidth;
+  if (minInputWidth) style["--vtp-input-min-width"] = minInputWidth;
+  if (maxInputWidth) style["--vtp-input-max-width"] = maxInputWidth;
+
+  return style;
+});
+
+const fieldStyle = computed(() => ({
+  width: `var(--vtp-input-width, ${heuristicFieldWidth.value})`,
+  minWidth: "var(--vtp-input-min-width, 0)",
+  maxWidth: "var(--vtp-input-max-width, none)",
+}));
+
 /* ── Time-mask composables (one per input) ── */
 const firstMask = useTimeMask(resolvedFormat);
 const firstInputValue = firstMask.inputValue;
 
 const secondMask = useTimeMask(resolvedFormat);
 const secondInputValue = secondMask.inputValue;
+
+/* ================================
+ * Mask ↔ model synchronization
+ * ================================ */
 
 // Sync mask ← model (column-picker changes, initial load, format change)
 watch(
@@ -489,7 +499,9 @@ watch(
 
 const secondInputRef = ref<HTMLInputElement | null>(null);
 
-/* ── Keydown wrappers (Enter commits, rest goes to mask) ── */
+/* ================================
+ * Keyboard interactions
+ * ================================ */
 function onFirstKeydown(e: KeyboardEvent) {
   if (props.disabled) return;
 
@@ -560,8 +572,10 @@ function onSecondKeydown(e: KeyboardEvent) {
   }
 }
 
-/* ── Commit: parse mask → model, then re-sync display ── */
-function commitMaskedTime(target: "first" | "second") {
+/* ================================
+ * Commit and normalization
+ * ================================ */
+function commitMaskedTime(target: Target) {
   const mask = target === "first" ? firstMask : secondMask;
   const parsed = mask.getParsedTime();
 
