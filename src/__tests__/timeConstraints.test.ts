@@ -20,6 +20,33 @@ async function typeDigits(
 }
 
 describe("time constraints (minTime/maxTime)", () => {
+  it("keeps single input empty when modelValue is null", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: null,
+        format: "HH:mm",
+      },
+    });
+
+    const input = wrapper.find("input.timepicker-field");
+    expect((input.element as HTMLInputElement).value).toBe("");
+    expect(input.attributes("placeholder")).toBe("Select time");
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+  });
+
+  it("uses custom placeholder text", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: null,
+        format: "HH:mm",
+        placeholder: "Pick a time",
+      },
+    });
+
+    const input = wrapper.find("input.timepicker-field");
+    expect(input.attributes("placeholder")).toBe("Pick a time");
+  });
+
   it("does not crash when disabledTimes contains malformed object values", () => {
     expect(() => {
       mount(TimePicker, {

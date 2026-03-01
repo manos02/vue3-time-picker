@@ -58,20 +58,21 @@ The repository includes [storybook deploy workflow](.github/workflows/storybook.
 
 ## Props
 
-| Prop             | Type                                   | Default     | Description                                                                             |
-| ---------------- | -------------------------------------- | ----------- | --------------------------------------------------------------------------------------- |
-| `modelValue`     | `string \| [string, string] \| null`   | `undefined` | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
-| `format`         | `TimeFormat`                           | `"HH:mm"`   | Display format (see format tokens below).                                               |
-| `range`          | `boolean`                              | `false`     | Enable range selection with two time inputs.                                            |
-| `disabled`       | `boolean`                              | `false`     | Disables the timepicker input(s) and prevents opening/selecting.                        |
-| `hourStep`       | `number`                               | `1`         | Step interval for the hour column.                                                      |
-| `minuteStep`     | `number`                               | `1`         | Step interval for the minute column.                                                    |
-| `secondStep`     | `number`                               | `1`         | Step interval for the second column.                                                    |
-| `minTime`        | `string`                               | `undefined` | Lower bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
-| `maxTime`        | `string`                               | `undefined` | Upper bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
-| `disabledTimes`  | `(string \| [string, string])[]`       | `undefined` | Disabled points/ranges in `HH:mm:ss`; e.g. `"12:00:00"` or `[["13:00:00","14:00:00"]]`. |
-| `isTimeDisabled` | `(time: InternalFormat) => boolean`    | `undefined` | Callback for custom disable rules. Return `true` to block a time.                       |
-| `size`           | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"`      | Size preset that maps to CSS variables.                                                 |
+| Prop             | Type                                   | Default         | Description                                                                             |
+| ---------------- | -------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| `modelValue`     | `string \| [string, string] \| null`   | `undefined`     | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
+| `format`         | `TimeFormat`                           | `"HH:mm"`       | Display format (see format tokens below).                                               |
+| `placeholder`    | `string`                               | `"Select time"` | Placeholder text shown when input is empty.                                             |
+| `range`          | `boolean`                              | `false`         | Enable range selection with two time inputs.                                            |
+| `disabled`       | `boolean`                              | `false`         | Disables the timepicker input(s) and prevents opening/selecting.                        |
+| `hourStep`       | `number`                               | `1`             | Step interval for the hour column.                                                      |
+| `minuteStep`     | `number`                               | `1`             | Step interval for the minute column.                                                    |
+| `secondStep`     | `number`                               | `1`             | Step interval for the second column.                                                    |
+| `minTime`        | `string`                               | `undefined`     | Lower bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `maxTime`        | `string`                               | `undefined`     | Upper bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `disabledTimes`  | `(string \| [string, string])[]`       | `undefined`     | Disabled points/ranges in `HH:mm:ss`; e.g. `"12:00:00"` or `[["13:00:00","14:00:00"]]`. |
+| `isTimeDisabled` | `(time: InternalFormat) => boolean`    | `undefined`     | Callback for custom disable rules. Return `true` to block a time.                       |
+| `size`           | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"`          | Size preset that maps to CSS variables.                                                 |
 
 ## Validation API
 
@@ -187,7 +188,7 @@ const range = ref(["09:00:00", "17:00:00"]);
 </template>
 ```
 
-When `range` is `true`, `modelValue` must be a `[string, string]` array.
+When `range` is `true`, `modelValue` must be a `[string, string]` array when set, or `null`/`undefined` for an empty state.
 
 ## 12-hour format
 

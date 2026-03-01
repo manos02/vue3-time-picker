@@ -131,6 +131,10 @@ export const timePickerProps = {
       return ok;
     },
   },
+  placeholder: {
+    type: String,
+    default: "Select time",
+  },
   size: {
     type: String as PropType<"xs" | "sm" | "md" | "lg" | "xl">,
     default: "md",

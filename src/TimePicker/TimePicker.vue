@@ -19,7 +19,7 @@
           type="text"
           class="timepicker-field"
           :value="firstInputValue"
-          :placeholder="resolvedFormat"
+          :placeholder="placeholderText"
           :style="{ width: fieldWidth }"
           :disabled="props.disabled"
           @focus="!props.disabled && (openFirst = true)"
@@ -43,7 +43,7 @@
           type="text"
           class="timepicker-field"
           :value="firstInputValue"
-          :placeholder="resolvedFormat"
+          :placeholder="placeholderText"
           :style="{ width: fieldWidth }"
           :disabled="props.disabled"
           @focus="!props.disabled && (openFirst = true)"
@@ -58,7 +58,7 @@
           type="text"
           class="timepicker-field"
           :value="secondInputValue"
-          :placeholder="resolvedFormat"
+          :placeholder="placeholderText"
           :style="{ width: fieldWidth }"
           :disabled="props.disabled"
           @focus="!props.disabled && (openSecond = true)"
@@ -232,6 +232,17 @@ function getCurrentTargetValue(target: "first" | "second"): InternalFormat {
   return init.value;
 }
 
+function hasTargetValue(target: "first" | "second"): boolean {
+  const value = props.modelValue;
+
+  if (Array.isArray(value)) {
+    return target === "first" ? !!value[0] : !!value[1];
+  }
+
+  if (target === "second") return false;
+  return typeof value === "string" && value.length > 0;
+}
+
 function setTargetValue(target: "first" | "second", next: InternalFormat) {
   if (target === "first") {
     if (Array.isArray(init.value)) {
@@ -347,6 +358,7 @@ const firstInit = computed<InternalFormat>({
     return init.value;
   },
   set(v) {
+    if (!hasTargetValue("first") && !openFirst.value) return;
     applyTime("first", v, { emitValidation: true });
   },
 });
@@ -357,6 +369,7 @@ const secondInit = computed<InternalFormat>({
     return init.value;
   },
   set(v) {
+    if (!hasTargetValue("second") && !openSecond.value) return;
     if (Array.isArray(init.value))
       applyTime("second", v, { emitValidation: true });
   },
@@ -377,7 +390,7 @@ watch(
   (newVal) => {
     if (newVal) {
       // Range selection
-      if (!Array.isArray(props.modelValue)) {
+      if (props.modelValue != null && !Array.isArray(props.modelValue)) {
         throw new RangeError(
           `Model value must be an array for range selection: ${props.modelValue}`,
         );
@@ -397,10 +410,12 @@ watch(
 watch(
   () => [effectiveMinBound.value, effectiveMaxBound.value, props.range],
   () => {
-    applyTime("first", getCurrentTargetValue("first"), {
-      emitValidation: true,
-    });
-    if (props.range) {
+    if (hasTargetValue("first")) {
+      applyTime("first", getCurrentTargetValue("first"), {
+        emitValidation: true,
+      });
+    }
+    if (props.range && hasTargetValue("second")) {
       applyTime("second", getCurrentTargetValue("second"), {
         emitValidation: true,
       });
@@ -412,10 +427,12 @@ watch(
 watch(
   () => [disabledRanges.value, props.isTimeDisabled, props.range],
   () => {
-    applyTime("first", getCurrentTargetValue("first"), {
-      emitValidation: true,
-    });
-    if (props.range) {
+    if (hasTargetValue("first")) {
+      applyTime("first", getCurrentTargetValue("first"), {
+        emitValidation: true,
+      });
+    }
+    if (props.range && hasTargetValue("second")) {
       applyTime("second", getCurrentTargetValue("second"), {
         emitValidation: true,
       });
@@ -425,11 +442,17 @@ watch(
 );
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
+const placeholderText = computed(() => props.placeholder ?? "Select time");
 const fieldWidth = computed(() => {
-  let length = resolvedFormat.value.length;
+  let length = Math.max(
+    resolvedFormat.value.length,
+    placeholderText.value.length,
+  );
   // AM/PM token is 1 char in format but renders as 2 chars (am/pm/AM/PM)
-  if (/[AaPp]$/.test(resolvedFormat.value)) length += 1;
-  return `${Math.min(12, Math.max(4, length))}ch`;
+  if (/[AaPp]$/.test(resolvedFormat.value)) {
+    length = Math.max(length, resolvedFormat.value.length + 1);
+  }
+  return `${Math.min(20, Math.max(6, length))}ch`;
 });
 
 /* ── Time-mask composables (one per input) ── */
@@ -443,6 +466,10 @@ const secondInputValue = secondMask.inputValue;
 watch(
   () => [firstInit.value, resolvedFormat.value],
   ([val]) => {
+    if (!hasTargetValue("first")) {
+      firstMask.clear();
+      return;
+    }
     firstMask.setFromTime(val as InternalFormat);
   },
   { immediate: true },
@@ -451,8 +478,8 @@ watch(
 watch(
   () => [secondInit.value, resolvedFormat.value, props.range],
   ([val, , isRange]) => {
-    if (!isRange) {
-      secondMask.setFromTime({ h: 0, m: 0, s: 0 });
+    if (!isRange || !hasTargetValue("second")) {
+      secondMask.clear();
       return;
     }
     secondMask.setFromTime(val as InternalFormat);
@@ -540,6 +567,11 @@ function commitMaskedTime(target: "first" | "second") {
 
   if (parsed) {
     applyTime(target, parsed, { emitValidation: true });
+  } else if (!mask.inputValue.value.trim()) {
+    if (!props.range && target === "first") {
+      emit("update:modelValue", null);
+      setValidation("first", "valid");
+    }
   } else {
     setValidation(target, "invalid", "BAD_TIME");
   }
@@ -547,9 +579,17 @@ function commitMaskedTime(target: "first" | "second") {
   // Always re-sync the display to the current model value
   // (reverts incomplete input, normalises clamped values)
   if (target === "first") {
-    firstMask.setFromTime(firstInit.value);
+    if (hasTargetValue("first")) {
+      firstMask.setFromTime(firstInit.value);
+    } else {
+      firstMask.clear();
+    }
   } else if (props.range) {
-    secondMask.setFromTime(secondInit.value);
+    if (hasTargetValue("second")) {
+      secondMask.setFromTime(secondInit.value);
+    } else {
+      secondMask.clear();
+    }
   }
 }
 </script>

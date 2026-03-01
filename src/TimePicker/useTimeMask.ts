@@ -321,6 +321,12 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     inputValue.value = render();
   }
 
+  function clear(): void {
+    rawDigits.value = [];
+    inputValue.value = "";
+    ampm.value = "AM";
+  }
+
   /** Parse the current mask state back to an InternalFormat.
    *  Returns `null` when the input is incomplete. */
   function getParsedTime(): InternalFormat | null {
@@ -361,6 +367,7 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     handleInput,
     handlePaste,
     setFromTime,
+    clear,
     getParsedTime,
     isComplete,
     totalDigits,
