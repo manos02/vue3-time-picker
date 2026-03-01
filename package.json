@@ -1,6 +1,6 @@
 {
   "name": "@manik02/vue3-timepicker",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "A flexible Vue 3 timepicker component with multiple format support, range selection, and fully customisable styling",
   "license": "MIT",
   "author": "Manos Savvides",
