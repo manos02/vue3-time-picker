@@ -33,7 +33,9 @@
     "component",
     "range",
     "12h",
-    "24h"
+    "24h",
+    "input",
+    "UI"
   ],
   "scripts": {
     "dev": "vite",
