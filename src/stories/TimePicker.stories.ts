@@ -97,7 +97,7 @@ export const Playground: Story = {
       };
     },
     template: `
-      <div style="min-width: 420px; padding: 12px;">
+      <div style="min-width: 420px; padding: 12px 12px 200px;">
         <div style="margin-bottom:10px;padding:10px;border:1px dashed #cbd5e1;border-radius:8px;background:#f8fafc;">
           <p style="margin:0 0 4px;font-size:12px;font-weight:600;">How to use Playground</p>
           <p style="margin:0;font-size:12px;opacity:.85;line-height:1.4;">
