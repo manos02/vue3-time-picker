@@ -14,6 +14,7 @@
       }"
     >
       <input
+        ref="firstInputRef"
         type="text"
         class="timepicker-field"
         :value="firstInputValue"
@@ -47,7 +48,7 @@
     </div>
 
     <!-- Columns -->
-    <div>
+    <div class="timepicker-popovers" :style="popoverStyle">
       <TimeSelection
         v-model:open="openFirst"
         v-model:initTime="firstInit"
@@ -468,6 +469,20 @@ const firstInputValue = firstMask.inputValue;
 const secondMask = useTimeMask(resolvedFormat);
 const secondInputValue = secondMask.inputValue;
 
+const firstInputRef = ref<HTMLInputElement | null>(null);
+const secondInputRef = ref<HTMLInputElement | null>(null);
+
+const popoverStyle = computed(() => {
+  const targetInput =
+    props.range && openSecond.value
+      ? secondInputRef.value
+      : firstInputRef.value;
+  const left = targetInput?.offsetLeft ?? 0;
+  return {
+    left: `${left}px`,
+  };
+});
+
 /* ================================
  * Mask ↔ model synchronization
  * ================================ */
@@ -496,8 +511,6 @@ watch(
   },
   { immediate: true },
 );
-
-const secondInputRef = ref<HTMLInputElement | null>(null);
 
 /* ================================
  * Keyboard interactions

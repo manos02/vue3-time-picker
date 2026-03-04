@@ -167,6 +167,16 @@
 }
 
 /* ===============================
+ * Popup layer (TimePicker)
+ * =============================== */
+.timepicker-popovers {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 1000;
+}
+
+/* ===============================
  * Dropdown container
  * =============================== */
 .timepicker-dropdown {
