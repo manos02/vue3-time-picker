@@ -2,6 +2,47 @@ import { computed, ref } from "vue";
 import type { Meta, StoryObj } from "@storybook/vue3-vite";
 import { TimePicker } from "../index";
 
+function toOptionalText(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length ? trimmed : undefined;
+}
+
+function parseDisabledTimesFromControl(
+  value: unknown,
+): Array<string | [string, string]> | undefined {
+  if (Array.isArray(value)) return value as Array<string | [string, string]>;
+  if (typeof value !== "string") return undefined;
+
+  const raw = value.trim();
+  if (!raw) return undefined;
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? (parsed as Array<string | [string, string]>)
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeStoryArgs(args: Record<string, unknown>) {
+  return {
+    ...args,
+    id: toOptionalText(args.id),
+    name: toOptionalText(args.name),
+    inputClass: toOptionalText(args.inputClass),
+    inputWidth: toOptionalText(args.inputWidth),
+    minInputWidth: toOptionalText(args.minInputWidth),
+    maxInputWidth: toOptionalText(args.maxInputWidth),
+    componentWidth: toOptionalText(args.componentWidth),
+    minTime: toOptionalText(args.minTime),
+    maxTime: toOptionalText(args.maxTime),
+    disabledTimes: parseDisabledTimesFromControl(args.disabledTimes),
+  };
+}
+
 const meta = {
   title: "Components/TimePicker",
   component: TimePicker,
@@ -9,6 +50,12 @@ const meta = {
   args: {
     format: "HH:mm:ss",
     range: false,
+    hideDropdown: false,
+    id: undefined,
+    name: undefined,
+    tabindex: 0,
+    autocomplete: "off",
+    inputClass: undefined,
     inputWidth: undefined,
     minInputWidth: undefined,
     maxInputWidth: undefined,
@@ -23,6 +70,58 @@ const meta = {
     disabledTimes: undefined,
   },
   argTypes: {
+    id: {
+      control: { type: "text" },
+      description: "Input id (range second input uses `${id}-end`) ",
+    },
+    name: {
+      control: { type: "text" },
+      description: "Input name (range second input uses `${name}-end`) ",
+    },
+    tabindex: {
+      control: { type: "number" },
+    },
+    autocomplete: {
+      control: { type: "text" },
+    },
+    hideDropdown: {
+      control: { type: "boolean" },
+      description: "Hide time columns and allow typing-only selection.",
+    },
+    inputClass: {
+      control: { type: "text" },
+      description:
+        "Extra input class. Component also accepts array/object, but Playground control uses string for simplicity.",
+    },
+    inputWidth: {
+      control: { type: "text" },
+      description: "Input width (e.g. `16ch`, `240px`, `100%`).",
+    },
+    minInputWidth: {
+      control: { type: "text" },
+      description: "Minimum input width (e.g. `12ch`).",
+    },
+    maxInputWidth: {
+      control: { type: "text" },
+      description: "Maximum input width (e.g. `320px`).",
+    },
+    componentWidth: {
+      control: { type: "text" },
+      description: "Outer component width (e.g. `100%`, `420px`).",
+    },
+    minTime: {
+      control: { type: "text" },
+      description: "Lower bound in `HH:mm` or `HH:mm:ss`.",
+    },
+    maxTime: {
+      control: { type: "text" },
+      description: "Upper bound in `HH:mm` or `HH:mm:ss`.",
+    },
+    disabledTimes: {
+      control: { type: "text" },
+      description:
+        'Disabled points/ranges. Use JSON text, e.g. [["12:00:00","13:00:00"]].',
+    },
     modelValue: { table: { disable: true } },
     isTimeDisabled: { table: { disable: true } },
     onValidate: { action: "validate" },
@@ -32,6 +131,9 @@ const meta = {
   render: (args) => ({
     components: { TimePicker },
     setup() {
+      const boundArgs = computed(() =>
+        normalizeStoryArgs(args as Record<string, unknown>),
+      );
       const single = ref("12:30:00");
       const range = ref<[string, string]>(["09:00:00", "17:00:00"]);
       const valueLabel = computed(() =>
@@ -43,6 +145,7 @@ const meta = {
 
       return {
         args,
+        boundArgs,
         single,
         range,
         valueLabel,
@@ -53,13 +156,13 @@ const meta = {
       <div style="min-width: 420px; padding: 12px;">
         <TimePicker
           v-if="!args.range"
-          v-bind="args"
+          v-bind="boundArgs"
           v-model="single"
           v-model:validationState="validationState"
         />
         <TimePicker
           v-else
-          v-bind="args"
+          v-bind="boundArgs"
           v-model="range"
           v-model:validationState="validationState"
         />
@@ -79,6 +182,9 @@ export const Playground: Story = {
   render: (args) => ({
     components: { TimePicker },
     setup() {
+      const boundArgs = computed(() =>
+        normalizeStoryArgs(args as Record<string, unknown>),
+      );
       const single = ref("12:30:00");
       const range = ref<[string, string]>(["09:00:00", "17:00:00"]);
       const valueLabel = computed(() =>
@@ -90,6 +196,7 @@ export const Playground: Story = {
 
       return {
         args,
+        boundArgs,
         single,
         range,
         valueLabel,
@@ -108,13 +215,13 @@ export const Playground: Story = {
 
         <TimePicker
           v-if="!args.range"
-          v-bind="args"
+          v-bind="boundArgs"
           v-model="single"
           v-model:validationState="validationState"
         />
         <TimePicker
           v-else
-          v-bind="args"
+          v-bind="boundArgs"
           v-model="range"
           v-model:validationState="validationState"
         />

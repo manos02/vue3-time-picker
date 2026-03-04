@@ -60,25 +60,38 @@ The repository includes [storybook deploy workflow](.github/workflows/storybook.
 
 ## Props
 
-| Prop             | Type                                   | Default         | Description                                                                             |
-| ---------------- | -------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
-| `modelValue`     | `string \| [string, string] \| null`   | `undefined`     | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
-| `format`         | `TimeFormat`                           | `"HH:mm"`       | Display format (see format tokens below).                                               |
-| `placeholder`    | `string`                               | `"Select time"` | Placeholder text shown when input is empty.                                             |
-| `inputWidth`     | `string \| number`                     | `undefined`     | Width for each input field. Number values are treated as `px`.                          |
-| `minInputWidth`  | `string \| number`                     | `undefined`     | Minimum width for each input field. Number values are treated as `px`.                  |
-| `maxInputWidth`  | `string \| number`                     | `undefined`     | Maximum width for each input field. Number values are treated as `px`.                  |
-| `componentWidth` | `string \| number`                     | `undefined`     | Width of the outer component shell. Number values are treated as `px`.                  |
-| `range`          | `boolean`                              | `false`         | Enable range selection with two time inputs.                                            |
-| `disabled`       | `boolean`                              | `false`         | Disables the timepicker input(s) and prevents opening/selecting.                        |
-| `hourStep`       | `number`                               | `1`             | Step interval for the hour column.                                                      |
-| `minuteStep`     | `number`                               | `1`             | Step interval for the minute column.                                                    |
-| `secondStep`     | `number`                               | `1`             | Step interval for the second column.                                                    |
-| `minTime`        | `string`                               | `undefined`     | Lower bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
-| `maxTime`        | `string`                               | `undefined`     | Upper bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
-| `disabledTimes`  | `(string \| [string, string])[]`       | `undefined`     | Disabled points/ranges in `HH:mm:ss`; e.g. `"12:00:00"` or `[["13:00:00","14:00:00"]]`. |
-| `isTimeDisabled` | `(time: InternalFormat) => boolean`    | `undefined`     | Callback for custom disable rules. Return `true` to block a time.                       |
-| `size`           | `"xs" \| "sm" \| "md" \| "lg" \| "xl"` | `"md"`          | Size preset that maps to CSS variables.                                                 |
+| Prop             | Type                                            | Default         | Description                                                                             |
+| ---------------- | ----------------------------------------------- | --------------- | --------------------------------------------------------------------------------------- |
+| `modelValue`     | `string \| [string, string] \| null`            | `undefined`     | Time value in `HH:mm:ss` format. Use a two-element array for range mode.                |
+| `format`         | `TimeFormat`                                    | `"HH:mm"`       | Display format (see format tokens below).                                               |
+| `placeholder`    | `string`                                        | `"Select time"` | Placeholder text shown when input is empty.                                             |
+| `id`             | `string`                                        | `undefined`     | Input id. In range mode, second input uses `${id}-end`.                                 |
+| `name`           | `string`                                        | `undefined`     | Input name. In range mode, second input uses `${name}-end`.                             |
+| `tabindex`       | `number`                                        | `0`             | Tab order index applied to input field(s).                                              |
+| `autocomplete`   | `string`                                        | `"off"`         | Native HTML autocomplete attribute for input field(s).                                  |
+| `inputClass`     | `string \| string[] \| Record<string, boolean>` | `undefined`     | Extra class(es) applied to the input field(s).                                          |
+| `inputWidth`     | `string \| number`                              | `undefined`     | Width for each input field. Number values are treated as `px`.                          |
+| `minInputWidth`  | `string \| number`                              | `undefined`     | Minimum width for each input field. Number values are treated as `px`.                  |
+| `maxInputWidth`  | `string \| number`                              | `undefined`     | Maximum width for each input field. Number values are treated as `px`.                  |
+| `componentWidth` | `string \| number`                              | `undefined`     | Width of the outer component shell. Number values are treated as `px`.                  |
+| `range`          | `boolean`                                       | `false`         | Enable range selection with two time inputs.                                            |
+| `disabled`       | `boolean`                                       | `false`         | Disables the timepicker input(s) and prevents opening/selecting.                        |
+| `hideDropdown`   | `boolean`                                       | `false`         | Hides time columns so selection is typing-only.                                         |
+| `hourStep`       | `number`                                        | `1`             | Step interval for the hour column.                                                      |
+| `minuteStep`     | `number`                                        | `1`             | Step interval for the minute column.                                                    |
+| `secondStep`     | `number`                                        | `1`             | Step interval for the second column.                                                    |
+| `minTime`        | `string`                                        | `undefined`     | Lower bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `maxTime`        | `string`                                        | `undefined`     | Upper bound in `HH:mm` or `HH:mm:ss`; input and dropdown are constrained.               |
+| `disabledTimes`  | `(string \| [string, string])[]`                | `undefined`     | Disabled points/ranges in `HH:mm:ss`; e.g. `"12:00:00"` or `[["13:00:00","14:00:00"]]`. |
+| `isTimeDisabled` | `(time: InternalFormat) => boolean`             | `undefined`     | Callback for custom disable rules. Return `true` to block a time.                       |
+| `size`           | `"xs" \| "sm" \| "md" \| "lg" \| "xl"`          | `"md"`          | Size preset that maps to CSS variables.                                                 |
+
+### Autocomplete notes
+
+- `autocomplete` is passed directly to the native `<input>` element(s).
+- In range mode, both inputs receive the same `autocomplete` value.
+- Browser autofill behavior depends on form context and input metadata (`id`, `name`, surrounding `<form>`).
+- Specific tokens (when useful for your form): e.g. `"one-time-code"`.
 
 ## Validation API
 

@@ -44,6 +44,15 @@ function isValidCssSizeValue(value: unknown): boolean {
   );
 }
 
+function isValidInputClassValue(value: unknown): boolean {
+  return (
+    value == undefined ||
+    typeof value === "string" ||
+    Array.isArray(value) ||
+    (typeof value === "object" && value !== null)
+  );
+}
+
 export const FORMAT_SHAPE =
   /^(HH|H|hh|h|kk|k):(mm|m)(?::(ss|s))?(?:\s*(A|a|P|p))?$/;
 export const TIME_SHAPE = /^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/;
@@ -79,6 +88,10 @@ export const timePickerProps = {
     default: false,
   },
   disabled: {
+    type: Boolean,
+    default: false,
+  },
+  hideDropdown: {
     type: Boolean,
     default: false,
   },
@@ -140,6 +153,73 @@ export const timePickerProps = {
   placeholder: {
     type: String,
     default: "Select time",
+  },
+  id: {
+    type: String as PropType<string | undefined>,
+    default: undefined,
+    validator: (v?: string) => {
+      const ok = v == undefined || typeof v === "string";
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`id\` must be a string. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  name: {
+    type: String as PropType<string | undefined>,
+    default: undefined,
+    validator: (v?: string) => {
+      const ok = v == undefined || typeof v === "string";
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`name\` must be a string. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  tabindex: {
+    type: Number,
+    default: 0,
+    validator: (v: number) => {
+      const ok = Number.isInteger(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`tabindex\` must be an integer. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  autocomplete: {
+    type: String,
+    default: "off",
+    validator: (v: string) => {
+      const ok = typeof v === "string";
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`autocomplete\` must be a string. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
+  },
+  inputClass: {
+    type: [String, Array, Object] as PropType<
+      string | string[] | Record<string, boolean> | undefined
+    >,
+    default: undefined,
+    validator: (v?: string | string[] | Record<string, boolean>) => {
+      const ok = isValidInputClassValue(v);
+      if (!ok && isDev) {
+        console.error(
+          `[VueTimepicker] \`inputClass\` must be a string, array, or object. Received: ${v}`,
+        );
+      }
+      return ok;
+    },
   },
   inputWidth: {
     type: [String, Number] as PropType<string | number | undefined>,

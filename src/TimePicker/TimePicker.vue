@@ -17,11 +17,16 @@
         ref="firstInputRef"
         type="text"
         class="timepicker-field"
+        :class="props.inputClass"
+        :id="firstInputId"
+        :name="firstInputName"
+        :tabindex="props.tabindex"
+        :autocomplete="props.autocomplete"
         :value="firstInputValue"
         :placeholder="placeholderText"
         :style="fieldStyle"
         :disabled="props.disabled"
-        @focus="!props.disabled && (openFirst = true)"
+        @focus="!props.disabled && !props.hideDropdown && (openFirst = true)"
         @keydown="onFirstKeydown"
         @input="firstMask.handleInput"
         @paste="firstMask.handlePaste"
@@ -34,11 +39,16 @@
           ref="secondInputRef"
           type="text"
           class="timepicker-field"
+          :class="props.inputClass"
+          :id="secondInputId"
+          :name="secondInputName"
+          :tabindex="props.tabindex"
+          :autocomplete="props.autocomplete"
           :value="secondInputValue"
           :placeholder="placeholderText"
           :style="fieldStyle"
           :disabled="props.disabled"
-          @focus="!props.disabled && (openSecond = true)"
+          @focus="!props.disabled && !props.hideDropdown && (openSecond = true)"
           @keydown="onSecondKeydown"
           @input="secondMask.handleInput"
           @paste="secondMask.handlePaste"
@@ -48,7 +58,11 @@
     </div>
 
     <!-- Columns -->
-    <div class="timepicker-popovers" :style="popoverStyle">
+    <div
+      v-if="!props.hideDropdown"
+      class="timepicker-popovers"
+      :style="popoverStyle"
+    >
       <TimeSelection
         v-model:open="openFirst"
         v-model:initTime="firstInit"
@@ -146,6 +160,14 @@ watch(
   () => props.disabled,
   (isDisabled) => {
     if (!isDisabled) return;
+    closeAllDropdowns();
+  },
+);
+
+watch(
+  () => props.hideDropdown,
+  (isHidden) => {
+    if (!isHidden) return;
     closeAllDropdowns();
   },
 );
@@ -417,6 +439,14 @@ watch(
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
 const placeholderText = computed(() => props.placeholder ?? "Select time");
+const firstInputId = computed(() => props.id);
+const secondInputId = computed(() =>
+  props.range && props.id ? `${props.id}-end` : undefined,
+);
+const firstInputName = computed(() => props.name);
+const secondInputName = computed(() =>
+  props.range && props.name ? `${props.name}-end` : undefined,
+);
 
 function toCssLength(value: string | number | undefined): string | undefined {
   if (value == undefined) return undefined;

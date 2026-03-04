@@ -82,6 +82,60 @@ describe("time constraints (minTime/maxTime)", () => {
     expect(input.attributes("placeholder")).toBe("Pick a time");
   });
 
+  it("passes id/name/tabindex/autocomplete/inputClass to single input", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: "12:00:00",
+        format: "HH:mm",
+        id: "start-time",
+        name: "startTime",
+        tabindex: 3,
+        autocomplete: "on",
+        inputClass: ["custom-time-input", "u-mono"],
+      },
+    });
+
+    const input = wrapper.find("input.timepicker-field");
+    expect(input.attributes("id")).toBe("start-time");
+    expect(input.attributes("name")).toBe("startTime");
+    expect(input.attributes("tabindex")).toBe("3");
+    expect(input.attributes("autocomplete")).toBe("on");
+    expect(input.classes()).toContain("custom-time-input");
+    expect(input.classes()).toContain("u-mono");
+  });
+
+  it("uses range-safe suffixes for second input id/name and mirrors shared passthrough props", () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        range: true,
+        modelValue: ["09:00:00", "17:00:00"],
+        format: "HH:mm",
+        id: "work-time",
+        name: "workTime",
+        tabindex: 5,
+        autocomplete: "off",
+        inputClass: { "custom-range-input": true },
+      },
+    });
+
+    const inputs = wrapper.findAll("input.timepicker-field");
+    expect(inputs.length).toBe(2);
+
+    expect(inputs[0].attributes("id")).toBe("work-time");
+    expect(inputs[0].attributes("name")).toBe("workTime");
+
+    expect(inputs[1].attributes("id")).toBe("work-time-end");
+    expect(inputs[1].attributes("name")).toBe("workTime-end");
+
+    expect(inputs[0].attributes("tabindex")).toBe("5");
+    expect(inputs[1].attributes("tabindex")).toBe("5");
+    expect(inputs[0].attributes("autocomplete")).toBe("off");
+    expect(inputs[1].attributes("autocomplete")).toBe("off");
+
+    expect(inputs[0].classes()).toContain("custom-range-input");
+    expect(inputs[1].classes()).toContain("custom-range-input");
+  });
+
   it("does not crash when disabledTimes contains malformed object values", () => {
     expect(() => {
       mount(TimePicker, {
@@ -110,6 +164,42 @@ describe("time constraints (minTime/maxTime)", () => {
     await nextTick();
 
     expect(wrapper.find(".vtp-cols").exists()).toBe(false);
+  });
+
+  it("does not open dropdown columns when hideDropdown=true", async () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: "12:00:00",
+        format: "HH:mm",
+        hideDropdown: true,
+      },
+    });
+
+    const input = wrapper.find("input.timepicker-field");
+    await input.trigger("focus");
+    await nextTick();
+
+    expect(wrapper.find(".vtp-cols").exists()).toBe(false);
+  });
+
+  it("still allows typing/commit when hideDropdown=true", async () => {
+    const wrapper = mount(TimePicker, {
+      props: {
+        modelValue: "12:00:00",
+        format: "HH:mm",
+        hideDropdown: true,
+      },
+    });
+
+    const input = wrapper.find("input.timepicker-field");
+    const inputEl = input.element as HTMLInputElement;
+
+    await typeDigits(inputEl, input, "0930");
+    await input.trigger("blur");
+
+    const emitted = wrapper.emitted("update:modelValue") ?? [];
+    const last = emitted[emitted.length - 1]?.[0];
+    expect(last).toBe("09:30:00");
   });
 
   it("clamps typed single value to minTime", async () => {
