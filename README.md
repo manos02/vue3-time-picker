@@ -228,6 +228,117 @@ Press `a` or `p` while focused to toggle between AM and PM.
 
 The dropdown columns will show values at the specified intervals (e.g. 00, 15, 30, 45 for a 15-minute step).
 
+## More quick examples
+
+### Start empty and allow clearing
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+
+const time = ref<string | null>(null);
+
+function clearTime() {
+  time.value = null;
+}
+</script>
+
+<template>
+  <TimePicker v-model="time" format="HH:mm" />
+  <button type="button" @click="clearTime">Clear</button>
+  <pre>{{ time }}</pre>
+</template>
+```
+
+### Typing-only input (no dropdown)
+
+```vue
+<template>
+  <TimePicker
+    v-model="time"
+    format="HH:mm:ss"
+    :hide-dropdown="true"
+    placeholder="Type time (e.g. 13:45:00)"
+  />
+</template>
+```
+
+### Working-hours bounds
+
+```vue
+<template>
+  <TimePicker
+    v-model="time"
+    format="HH:mm"
+    min-time="09:00:00"
+    max-time="18:00:00"
+  />
+</template>
+```
+
+### Disable specific slots and ranges
+
+```vue
+<template>
+  <TimePicker
+    v-model="time"
+    format="HH:mm"
+    :disabled-times="[
+      '10:30:00',
+      ['12:00:00', '13:00:00'],
+      ['15:15:00', '15:45:00']
+    ]"
+  />
+</template>
+```
+
+### React to validation state in UI
+
+```vue
+<script setup lang="ts">
+import { computed, ref } from "vue";
+
+const time = ref("08:00:00");
+const validationState = ref<"valid" | "invalid" | "out-of-range">("valid");
+
+const message = computed(() => {
+  if (validationState.value === "out-of-range") return "Adjusted to nearest allowed time";
+  if (validationState.value === "invalid") return "Please enter a valid time";
+  return "Looks good";
+});
+</script>
+
+<template>
+  <TimePicker
+    v-model="time"
+    v-model:validationState="validationState"
+    format="HH:mm"
+    min-time="09:00:00"
+    max-time="17:00:00"
+  />
+  <small>{{ message }}</small>
+</template>
+```
+
+### Range picker with 30-minute intervals
+
+```vue
+<script setup lang="ts">
+import { ref } from "vue";
+
+const range = ref<[string, string]>(["09:00:00", "17:00:00"]);
+</script>
+
+<template>
+  <TimePicker
+    v-model="range"
+    :range="true"
+    format="HH:mm"
+    :minute-step="30"
+  />
+</template>
+```
+
 ## Size presets
 
 ```vue
