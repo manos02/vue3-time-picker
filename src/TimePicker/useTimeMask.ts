@@ -69,12 +69,20 @@ function parseMaskFormat(fmt: string): ParsedMaskFormat {
   };
 }
 
+function parseMaskFormatSafe(fmt: string): ParsedMaskFormat {
+  try {
+    return parseMaskFormat(fmt);
+  } catch {
+    return parseMaskFormat("HH:mm");
+  }
+}
+
 /* ──────────────────────────────────────────────────────────
  * Composable
  * ────────────────────────────────────────────────────────── */
 
 export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
-  const parsed = computed(() => parseMaskFormat(format.value));
+  const parsed = computed(() => parseMaskFormatSafe(format.value));
   const totalDigits = computed(() => parsed.value.digitGroups.length * 2);
 
   /** Individual entered digits (always slot-width 2 per group) */

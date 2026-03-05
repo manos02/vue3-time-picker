@@ -460,4 +460,21 @@ describe("useTimeMask", () => {
       expect(escEvent.defaultPrevented).toBe(false);
     });
   });
+
+  describe("invalid format resilience", () => {
+    it("does not throw when format is transiently invalid", () => {
+      const format = ref("HH:mm");
+      const mask = useTimeMask(format);
+
+      typeDigits(mask, el, "1234");
+      expect(mask.inputValue.value).toBe("12:34");
+
+      format.value = "HH:mm:";
+
+      expect(() => {
+        const parsed = mask.getParsedTime();
+        expect(parsed).not.toBeNull();
+      }).not.toThrow();
+    });
+  });
 });

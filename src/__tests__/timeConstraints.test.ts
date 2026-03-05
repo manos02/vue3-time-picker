@@ -360,4 +360,28 @@ describe("time constraints (minTime/maxTime)", () => {
 
     expect(minute30?.classes()).toContain("timepicker-option--disabled");
   });
+
+  it("keeps initial PM value in 12h mode on mount", async () => {
+    const wrapper = mount(TimeSelection, {
+      props: {
+        open: true,
+        initTime: { h: 15, m: 45, s: 0 },
+        format: "hh:mm A",
+        hourStep: 1,
+        minuteStep: 15,
+        secondStep: 1,
+      },
+    });
+
+    await nextTick();
+
+    const updates = wrapper.emitted("update:initTime") ?? [];
+    const firstUpdate = updates[0]?.[0] as InternalFormat;
+    expect(firstUpdate).toEqual({ h: 15, m: 45, s: 0 });
+
+    const panels = wrapper.findAll(".timepicker-dropdown__panel");
+    const ampmPanel = panels[2];
+    const activeAmpm = ampmPanel.find(".timepicker-option--active");
+    expect(activeAmpm.text()).toBe("PM");
+  });
 });

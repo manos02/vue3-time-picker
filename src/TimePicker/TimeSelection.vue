@@ -40,7 +40,6 @@ import {
   hasSeconds,
   isTimeInRanges,
   is12h,
-  isPm,
   isTimeWithinBounds,
   to24,
 } from "../helpers";
@@ -111,9 +110,30 @@ function onKeydown(e: KeyboardEvent) {
 onMounted(() => document.addEventListener("keydown", onKeydown));
 onBeforeUnmount(() => document.removeEventListener("keydown", onKeydown));
 
-const hourIdx = ref(Math.floor(props.initTime.h / props.hourStep!) || 0);
-const minuteIdx = ref(Math.floor(props.initTime.m / props.minuteStep!) || 0);
-const secondIdx = ref(Math.floor(props.initTime.s / props.secondStep!) || 0);
+const hourIdx = ref(0);
+const minuteIdx = ref(0);
+const secondIdx = ref(0);
+// AM/PM: 0 = AM, 1 = PM
+const ampmIdx = ref(0);
+
+function syncIndicesFromTime(t: InternalFormat) {
+  const hStep = normalizeStep(props.hourStep);
+  const mStep = normalizeStep(props.minuteStep);
+  const sStep = normalizeStep(props.secondStep);
+
+  let hForIdx = t.h;
+  if (show12UI.value) {
+    // In 12-h mode the list is indexed 0..11/step; derive the 12-h value
+    ampmIdx.value = t.h >= 12 ? 1 : 0;
+    hForIdx = t.h % 12; // 0-based for list lookup
+  } else if (isKFormat.value && t.h === 0) {
+    hForIdx = 24;
+  }
+
+  hourIdx.value = Math.floor(hForIdx / hStep);
+  minuteIdx.value = Math.floor(t.m / mStep);
+  secondIdx.value = Math.floor(t.s / sStep);
+}
 
 /* ================================
  * External model -> internal indices
@@ -123,23 +143,9 @@ const secondIdx = ref(Math.floor(props.initTime.s / props.secondStep!) || 0);
 watch(
   () => props.initTime,
   (t) => {
-    const hStep = normalizeStep(props.hourStep);
-    const mStep = normalizeStep(props.minuteStep);
-    const sStep = normalizeStep(props.secondStep);
-
-    let hForIdx = t.h;
-    if (show12UI.value) {
-      // In 12-h mode the list is indexed 0..11/step; derive the 12-h value
-      ampmIdx.value = t.h >= 12 ? 1 : 0;
-      hForIdx = t.h % 12; // 0-based for list lookup
-    } else if (isKFormat.value && t.h === 0) {
-      hForIdx = 24;
-    }
-
-    hourIdx.value = Math.floor(hForIdx / hStep);
-    minuteIdx.value = Math.floor(t.m / mStep);
-    secondIdx.value = Math.floor(t.s / sStep);
+    syncIndicesFromTime(t);
   },
+  { immediate: true },
 );
 function makeList(max: number, step: number): Item[] {
   const arr: Item[] = [];
@@ -169,9 +175,6 @@ function makeKHourList(step: number): Item[] {
   }
   return arr;
 }
-
-// AM/PM: 0 = AM, 1 = PM
-const ampmIdx = ref(isPm(props.format) ? 1 : 0);
 
 const baseHoursList = computed<Item[]>(() => {
   if (!show12UI.value) {

@@ -426,13 +426,13 @@ function revalidateExistingTargets() {
 }
 
 watch(
-  () => [effectiveMinBound.value, effectiveMaxBound.value, props.range],
-  revalidateExistingTargets,
-  { immediate: true },
-);
-
-watch(
-  () => [disabledRanges.value, props.isTimeDisabled, props.range],
+  () => [
+    effectiveMinBound.value,
+    effectiveMaxBound.value,
+    disabledRanges.value,
+    props.isTimeDisabled,
+    props.range,
+  ],
   revalidateExistingTargets,
   { immediate: true },
 );
@@ -545,36 +545,49 @@ watch(
 /* ================================
  * Keyboard interactions
  * ================================ */
-function onFirstKeydown(e: KeyboardEvent) {
-  if (props.disabled) return;
+function processMaskKeydown(
+  target: Target,
+  e: KeyboardEvent,
+  mask: ReturnType<typeof useTimeMask>,
+): boolean {
+  if (props.disabled) return false;
 
   if (e.key === "Enter") {
     e.preventDefault();
-    commitMaskedTime("first");
-    return;
+    commitMaskedTime(target);
+    return false;
   }
 
+  const isDigit = /^\d$/.test(e.key);
+
   // Close dropdowns while typing
-  if (/^\d$/.test(e.key)) {
+  if (isDigit) {
     openFirst.value = false;
     openSecond.value = false;
   }
 
+  mask.handleKeydown(e);
+
+  // Keep model in sync after every digit so the dropdown is up-to-date
+  if (isDigit) {
+    const parsed = mask.getParsedTime();
+    if (parsed) {
+      applyTime(target, parsed, { emitValidation: false });
+    }
+  }
+
+  return isDigit;
+}
+
+function onFirstKeydown(e: KeyboardEvent) {
   // Check cursor position BEFORE the mask processes the key
   const el = e.target as HTMLInputElement;
   const cursorBefore = firstMask.displayPosToDigitIndex(el.selectionStart ?? 0);
   const isLastDigit =
     /^\d$/.test(e.key) && cursorBefore >= firstMask.totalDigits.value - 1;
 
-  firstMask.handleKeydown(e);
-
-  // Keep model in sync after every digit so the dropdown is up-to-date
-  if (/^\d$/.test(e.key)) {
-    const parsed = firstMask.getParsedTime();
-    if (parsed) {
-      applyTime("first", parsed, { emitValidation: false });
-    }
-  }
+  const didTypeDigit = processMaskKeydown("first", e, firstMask);
+  if (!didTypeDigit) return;
 
   // In range mode, auto-focus the second input when the last digit is typed
   if (props.range && isLastDigit && secondInputRef.value) {
@@ -590,29 +603,7 @@ function onFirstKeydown(e: KeyboardEvent) {
 }
 
 function onSecondKeydown(e: KeyboardEvent) {
-  if (props.disabled) return;
-
-  if (e.key === "Enter") {
-    e.preventDefault();
-    commitMaskedTime("second");
-    return;
-  }
-
-  // Close dropdowns while typing
-  if (/^\d$/.test(e.key)) {
-    openFirst.value = false;
-    openSecond.value = false;
-  }
-
-  secondMask.handleKeydown(e);
-
-  // Keep model in sync after every digit so the dropdown is up-to-date
-  if (/^\d$/.test(e.key)) {
-    const parsed = secondMask.getParsedTime();
-    if (parsed) {
-      applyTime("second", parsed, { emitValidation: false });
-    }
-  }
+  processMaskKeydown("second", e, secondMask);
 }
 
 /* ================================
