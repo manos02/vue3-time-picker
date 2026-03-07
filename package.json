@@ -1,9 +1,16 @@
 {
   "name": "@manik02/vue3-timepicker",
   "version": "0.4.5",
-  "description": "A flexible Vue 3 timepicker component with multiple format support, range selection, and fully customisable styling",
+  "description": "Vue 3 time picker component with multiple formats, range selection, min/max constraints, disabled times, validation, custom styling, TypeScript support and more.",
   "license": "MIT",
-  "author": "Manos Savvides",
+  "author": {
+    "name": "Manos Savvides",
+    "url": "https://github.com/manos02"
+  },
+  "homepage": "https://manos02.github.io/vue3-time-picker/",
+  "bugs": {
+    "url": "https://github.com/manos02/vue3-time-picker/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/manos02/vue3-time-picker.git"
@@ -27,15 +34,24 @@
   "keywords": [
     "vue",
     "vue3",
+    "vue-3",
+    "vue-timepicker",
+    "vue-time-picker",
     "timepicker",
     "time-picker",
+    "time-input",
+    "time-range-picker",
+    "time-selector",
+    "time-select",
     "time",
     "component",
+    "typescript",
+    "form",
     "range",
     "12h",
     "24h",
     "input",
-    "UI"
+    "ui"
   ],
   "scripts": {
     "dev": "vite",
