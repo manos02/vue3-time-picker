@@ -1,6 +1,6 @@
 {
   "name": "@manik02/vue3-timepicker",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "Vue 3 time picker component with multiple formats, range selection, min/max constraints, disabled times, validation, custom styling, TypeScript support and more.",
   "license": "MIT",
   "author": {
