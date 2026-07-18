@@ -69,7 +69,7 @@ describe("hasK", () => {
 
 describe("parseFromModel", () => {
   it("extracts h, m, s from a standard time string", () => {
-    expect(parseFromModel("14:30:00", "HH:mm:ss")).toEqual({
+    expect(parseFromModel("14:30:00")).toEqual({
       h: 14,
       m: 30,
       s: 0,
@@ -77,20 +77,20 @@ describe("parseFromModel", () => {
   });
 
   it("handles time without seconds", () => {
-    expect(parseFromModel("09:15", "HH:mm")).toEqual({ h: 9, m: 15, s: 0 });
+    expect(parseFromModel("09:15")).toEqual({ h: 9, m: 15, s: 0 });
   });
 
   it("returns zeroes for null/undefined", () => {
-    expect(parseFromModel(null, "HH:mm")).toEqual({ h: 0, m: 0, s: 0 });
-    expect(parseFromModel(undefined, "HH:mm")).toEqual({ h: 0, m: 0, s: 0 });
+    expect(parseFromModel(null)).toEqual({ h: 0, m: 0, s: 0 });
+    expect(parseFromModel(undefined)).toEqual({ h: 0, m: 0, s: 0 });
   });
 
   it("returns zeroes for empty string", () => {
-    expect(parseFromModel("", "HH:mm")).toEqual({ h: 0, m: 0, s: 0 });
+    expect(parseFromModel("")).toEqual({ h: 0, m: 0, s: 0 });
   });
 
   it("parses midnight correctly", () => {
-    expect(parseFromModel("00:00:00", "HH:mm:ss")).toEqual({
+    expect(parseFromModel("00:00:00")).toEqual({
       h: 0,
       m: 0,
       s: 0,
@@ -98,7 +98,7 @@ describe("parseFromModel", () => {
   });
 
   it("parses end-of-day correctly", () => {
-    expect(parseFromModel("23:59:59", "HH:mm:ss")).toEqual({
+    expect(parseFromModel("23:59:59")).toEqual({
       h: 23,
       m: 59,
       s: 59,

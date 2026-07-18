@@ -34,23 +34,20 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
+import type { Item } from "./types";
 
 const props = defineProps<{
-  items: Array<{
-    key: string | number;
-    value: any;
-    text: string;
-    disabled?: boolean;
-  }>;
+  items: Item[];
   activeIndex: number;
 }>();
 
 const emit = defineEmits<{
   (e: "update:activeIndex", index: number): void;
-  (e: "select", v: any): void;
+  (e: "select", v: Item["value"]): void;
 }>();
 
 const menu = ref<HTMLElement | null>(null);
+const focusIndex = ref<number>(props.activeIndex ?? 0);
 const isSyncingScroll = ref(false);
 let syncScrollTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -130,16 +127,10 @@ onBeforeUnmount(() => {
   if (syncScrollTimer) clearTimeout(syncScrollTimer);
 });
 
-function setActive(i: number) {
+function onOptionClick(i: number) {
   emit("update:activeIndex", i);
   emit("select", props.items[i]?.value);
 }
-
-function onOptionClick(i: number) {
-  setActive(i);
-}
-
-const focusIndex = ref<number>(props.activeIndex ?? 0);
 </script>
 
 <style src="../styles/timepicker.css"></style>

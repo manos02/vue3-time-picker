@@ -32,7 +32,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  type Ref,
+  type ComputedRef,
+} from "vue";
 import TimeColumn from "./TimeColumn.vue";
 import { InternalFormat, Item } from "./types";
 import {
@@ -41,16 +49,11 @@ import {
   isTimeInRanges,
   is12h,
   isTimeWithinBounds,
-  to24,
 } from "../helpers";
 
 function normalizeStep(step: number | undefined): number {
   return Math.max(1, step ?? 1);
 }
-
-const show12UI = computed(() => is12h(props.format));
-const showSecondsUI = computed(() => hasSeconds(props.format));
-const isKFormat = computed(() => hasK(props.format));
 
 const props = defineProps<{
   open: boolean;
@@ -74,6 +77,10 @@ const emit = defineEmits<{
   (e: "close"): void;
   (e: "update:open", v: boolean): void;
 }>();
+
+const show12UI = computed(() => is12h(props.format));
+const showSecondsUI = computed(() => hasSeconds(props.format));
+const isKFormat = computed(() => hasK(props.format));
 
 const openLocal = computed({
   get: () => props.open ?? false,
@@ -204,9 +211,19 @@ const secondCandidates = computed<number[]>(() => {
   return baseSecondsList.value.map((item) => Number(item.value ?? 0));
 });
 
-function getHour24(item: Item): number {
-  return Number(item.value ?? 0);
-}
+/* ================================
+ * Selected values (internal 24h)
+ * Note: hour list items already carry 24-h values, so no conversion needed.
+ * ================================ */
+const hourVal = computed(() =>
+  Number(baseHoursList.value[hourIdx.value]?.value ?? 0),
+);
+const minuteVal = computed(() =>
+  Number(baseMinutesList.value[minuteIdx.value]?.value ?? 0),
+);
+const secondVal = computed(() =>
+  Number(baseSecondsList.value[secondIdx.value]?.value ?? 0),
+);
 
 function findFirstEnabledIndex(items: Item[]): number {
   const idx = items.findIndex((item) => !item.disabled);
@@ -220,152 +237,92 @@ function isCandidateEnabled(time: InternalFormat): boolean {
   return true;
 }
 
-const hoursList = computed<Item[]>(() => {
-  return baseHoursList.value.map((item) => {
-    const candidateHour = getHour24(item);
-    const hasValidCombo = minuteCandidates.value.some((minute) =>
+/** Copy items, disabling those whose value yields no enabled time */
+function markDisabled(items: Item[], isEnabled: (value: number) => boolean) {
+  return items.map((item) => ({
+    ...item,
+    disabled: !isEnabled(Number(item.value ?? 0)),
+  }));
+}
+
+const hoursList = computed<Item[]>(() =>
+  markDisabled(baseHoursList.value, (hour) =>
+    minuteCandidates.value.some((minute) =>
       secondCandidates.value.some((second) =>
-        isCandidateEnabled({ h: candidateHour, m: minute, s: second }),
+        isCandidateEnabled({ h: hour, m: minute, s: second }),
       ),
-    );
+    ),
+  ),
+);
 
-    return {
-      ...item,
-      disabled: !hasValidCombo,
-    };
-  });
-});
+const minutesList = computed<Item[]>(() =>
+  markDisabled(baseMinutesList.value, (minute) =>
+    secondCandidates.value.some((second) =>
+      isCandidateEnabled({ h: hourVal.value, m: minute, s: second }),
+    ),
+  ),
+);
 
-const minutesList = computed<Item[]>(() => {
-  const selectedHour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
-  return baseMinutesList.value.map((item) => {
-    const candidateMinute = Number(item.value ?? 0);
-    const hasValidCombo = secondCandidates.value.some((second) =>
-      isCandidateEnabled({ h: selectedHour, m: candidateMinute, s: second }),
-    );
-
-    return {
-      ...item,
-      disabled: !hasValidCombo,
-    };
-  });
-});
-
-const secondsList = computed<Item[]>(() => {
-  const selectedHour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
-  const selectedMinute = Number(
-    baseMinutesList.value[minuteIdx.value]?.value ?? 0,
-  );
-  return baseSecondsList.value.map((item) => {
-    const candidateSecond = Number(item.value ?? 0);
-    return {
-      ...item,
-      disabled: !isCandidateEnabled({
-        h: selectedHour,
-        m: selectedMinute,
-        s: candidateSecond,
-      }),
-    };
-  });
-});
+const secondsList = computed<Item[]>(() =>
+  markDisabled(baseSecondsList.value, (second) =>
+    isCandidateEnabled({ h: hourVal.value, m: minuteVal.value, s: second }),
+  ),
+);
 
 const ampmList = computed<Item[]>(() => {
   if (!show12UI.value) return baseAmpmList.value;
 
-  const minute = Number(baseMinutesList.value[minuteIdx.value]?.value ?? 0);
-  const second = showSecondsUI.value
-    ? Number(baseSecondsList.value[secondIdx.value]?.value ?? 0)
-    : 0;
+  const minute = minuteVal.value;
+  const second = showSecondsUI.value ? secondVal.value : 0;
 
   return baseAmpmList.value.map((item) => {
-    const isPmMode = item.value === "PM";
-    const hasValidCombo = make12HourList(isPmMode, props.hourStep!).some(
-      (hourItem) =>
-        isCandidateEnabled({
-          h: Number(hourItem.value ?? 0),
-          m: minute,
-          s: second,
-        }),
+    const hasValidCombo = make12HourList(
+      item.value === "PM",
+      props.hourStep!,
+    ).some((hourItem) =>
+      isCandidateEnabled({
+        h: Number(hourItem.value ?? 0),
+        m: minute,
+        s: second,
+      }),
     );
 
-    return {
-      ...item,
-      disabled: !hasValidCombo,
-    };
+    return { ...item, disabled: !hasValidCombo };
   });
 });
 
-/* ================================
- * Selected values (internal 24h)
- * ================================ */
-const ampmVal = computed(() => (ampmIdx.value === 1 ? "PM" : "AM"));
-
-const hourVal = computed(() => {
-  const hour = Number(baseHoursList.value[hourIdx.value]?.value ?? 0);
-  if (show12UI.value) {
-    // convert am/pm
-    return ampmVal.value === "PM" ? to24(hour, true) : to24(hour, false);
-  }
-  if (isKFormat.value && hour === 24) return 0; // convert k format
-  return hour;
-});
-
-const minuteVal = computed(() =>
-  Number(baseMinutesList.value[minuteIdx.value]?.value ?? 0),
-);
-const secondVal = computed(() =>
-  Number(baseSecondsList.value[secondIdx.value]?.value ?? 0),
-);
-
-function syncIndexWithEnabledItems(
-  items: Item[],
-  currentIndex: number,
-  updateIndex: (next: number) => void,
+/** When a list changes, move its index off a disabled/missing item. */
+function keepIndexOnEnabledItem(
+  list: ComputedRef<Item[]>,
+  idx: Ref<number>,
+  isActive?: () => boolean,
 ) {
-  if (!items.length) return;
-  if (!items[currentIndex] || items[currentIndex].disabled) {
-    updateIndex(findFirstEnabledIndex(items));
-  }
+  watch(list, (items) => {
+    if (isActive && !isActive()) return;
+    if (!items.length) return;
+    if (!items[idx.value] || items[idx.value].disabled) {
+      idx.value = findFirstEnabledIndex(items);
+    }
+  });
 }
 
-watch(hoursList, (items) => {
-  syncIndexWithEnabledItems(items, hourIdx.value, (next) => {
-    hourIdx.value = next;
-  });
-});
-
-watch(minutesList, (items) => {
-  syncIndexWithEnabledItems(items, minuteIdx.value, (next) => {
-    minuteIdx.value = next;
-  });
-});
-
-watch(secondsList, (items) => {
-  if (!showSecondsUI.value || !items.length) return;
-  syncIndexWithEnabledItems(items, secondIdx.value, (next) => {
-    secondIdx.value = next;
-  });
-});
-
-watch(ampmList, (items) => {
-  if (!show12UI.value || !items.length) return;
-  syncIndexWithEnabledItems(items, ampmIdx.value, (next) => {
-    ampmIdx.value = next;
-  });
-});
+keepIndexOnEnabledItem(hoursList, hourIdx);
+keepIndexOnEnabledItem(minutesList, minuteIdx);
+keepIndexOnEnabledItem(secondsList, secondIdx, () => showSecondsUI.value);
+keepIndexOnEnabledItem(ampmList, ampmIdx, () => show12UI.value);
 
 /* ================================
  * Handlers
  * ================================ */
-function onMinuteSelect(_: number) {
+function onMinuteSelect() {
   // If there are no seconds and no AM/PM column, confirm immediately
   if (!showSecondsUI.value && !show12UI.value) confirm();
 }
-function onSecondSelect(_: number) {
+function onSecondSelect() {
   // If there’s no AM/PM column, we can confirm now
   if (!show12UI.value) confirm();
 }
-function onAmpmSelect(_: string) {
+function onAmpmSelect() {
   confirm();
 }
 

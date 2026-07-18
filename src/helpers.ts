@@ -19,19 +19,14 @@ export function hasK(fmt: string): boolean {
   return /k{1,2}/.test(fmt);
 }
 
-/** Parse time string into { h, m, s } numbers */
+/** Parse a 24-hour "HH:mm(:ss)" model string into { h, m, s } numbers */
 export function parseFromModel(
   str: string | null | undefined,
-  fmt: string,
-): { h: number; m: number; s: number } {
+): InternalFormat {
   if (!str || typeof str !== "string") return { h: 0, m: 0, s: 0 };
 
-  const nums = str.match(/\d+/g) || []; // extract numbers
-
-  let h = nums[0] !== undefined ? +nums[0] : 0;
-  const m = +nums[1] || 0;
-  const s = +nums[2] || 0;
-  return { h, m, s };
+  const nums = (str.match(/\d+/g) || []).map(Number);
+  return { h: nums[0] || 0, m: nums[1] || 0, s: nums[2] || 0 };
 }
 
 export function to12(h24: number) {

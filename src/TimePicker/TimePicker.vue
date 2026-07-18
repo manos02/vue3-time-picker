@@ -74,6 +74,8 @@
         :max-time="effectiveMaxBound"
         :disabled-ranges="disabledRanges"
         :is-time-disabled="props.isTimeDisabled"
+        @open="emit('open')"
+        @close="emit('close')"
       />
 
       <!-- render second selector only for range mode -->
@@ -89,6 +91,8 @@
         :max-time="effectiveMaxBound"
         :disabled-ranges="disabledRanges"
         :is-time-disabled="props.isTimeDisabled"
+        @open="emit('open')"
+        @close="emit('close')"
       />
     </div>
   </div>
@@ -176,9 +180,9 @@ const init = computed<InternalFormat | [InternalFormat, InternalFormat]>({
   get() {
     if (Array.isArray(props.modelValue)) {
       const [a, b] = props.modelValue;
-      return [parseFromModel(a, props.format), parseFromModel(b, props.format)];
+      return [parseFromModel(a), parseFromModel(b)];
     } else {
-      return parseFromModel(props.modelValue, props.format);
+      return parseFromModel(props.modelValue);
     }
   },
   set(v) {
@@ -194,10 +198,10 @@ const init = computed<InternalFormat | [InternalFormat, InternalFormat]>({
 });
 
 const minBound = computed<InternalFormat | null>(() =>
-  props.minTime ? parseFromModel(props.minTime, "HH:mm:ss") : null,
+  props.minTime ? parseFromModel(props.minTime) : null,
 );
 const maxBound = computed<InternalFormat | null>(() =>
-  props.maxTime ? parseFromModel(props.maxTime, "HH:mm:ss") : null,
+  props.maxTime ? parseFromModel(props.maxTime) : null,
 );
 const hasValidBounds = computed(() => {
   if (!minBound.value || !maxBound.value) return true;
@@ -205,14 +209,11 @@ const hasValidBounds = computed(() => {
 });
 
 const validationState = computed<ValidationState>(() => {
-  if (
-    firstValidation.value === "out-of-range" ||
-    (props.range && secondValidation.value === "out-of-range")
-  ) {
-    return "out-of-range";
-  }
-  if (firstValidation.value === "invalid") return "invalid";
-  if (props.range && secondValidation.value === "invalid") return "invalid";
+  const states = props.range
+    ? [firstValidation.value, secondValidation.value]
+    : [firstValidation.value];
+  if (states.includes("out-of-range")) return "out-of-range";
+  if (states.includes("invalid")) return "invalid";
   return "valid";
 });
 
@@ -220,8 +221,8 @@ const disabledRanges = computed<Array<[InternalFormat, InternalFormat]>>(() => {
   const entries = props.disabledTimes ?? [];
   return entries.map((entry: DisabledTimeInput) => {
     const pair = Array.isArray(entry) ? entry : [entry, entry];
-    const start = parseFromModel(pair[0], "HH:mm:ss");
-    const end = parseFromModel(pair[1], "HH:mm:ss");
+    const start = parseFromModel(pair[0]);
+    const end = parseFromModel(pair[1]);
     if (compareTimes(start, end) <= 0) return [start, end];
     return [end, start];
   });
@@ -234,12 +235,8 @@ function isDisabledByRules(time: InternalFormat): boolean {
 }
 
 function getCurrentTargetValue(target: Target): InternalFormat {
-  if (target === "first") {
-    if (Array.isArray(init.value)) return init.value[0];
-    return init.value;
-  }
-  if (Array.isArray(init.value)) return init.value[1];
-  return init.value;
+  if (!Array.isArray(init.value)) return init.value;
+  return init.value[target === "first" ? 0 : 1];
 }
 
 function hasTargetValue(target: Target): boolean {
@@ -363,10 +360,7 @@ function applyTime(
 }
 
 const firstInit = computed<InternalFormat>({
-  get() {
-    if (Array.isArray(init.value)) return init.value[0];
-    return init.value;
-  },
+  get: () => getCurrentTargetValue("first"),
   set(v) {
     if (!hasTargetValue("first") && !openFirst.value) return;
     applyTime("first", v, { emitValidation: true });
@@ -374,10 +368,7 @@ const firstInit = computed<InternalFormat>({
 });
 
 const secondInit = computed<InternalFormat>({
-  get() {
-    if (Array.isArray(init.value)) return init.value[1];
-    return init.value;
-  },
+  get: () => getCurrentTargetValue("second"),
   set(v) {
     if (!hasTargetValue("second") && !openSecond.value) return;
     if (Array.isArray(init.value))

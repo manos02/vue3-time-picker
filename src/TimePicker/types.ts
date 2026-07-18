@@ -64,24 +64,33 @@ const isDev =
       process.env &&
       process.env.NODE_ENV !== "production";
 
+/** Wrap a check so it logs a dev-only error when the value is rejected. */
+function withDevError<T>(
+  check: (v: T) => boolean,
+  message: (v: T) => string,
+): (v: T) => boolean {
+  return (v: T) => {
+    const ok = check(v);
+    if (!ok && isDev) console.error(`[VueTimepicker] ${message(v)}`);
+    return ok;
+  };
+}
+
+const isOptionalTime = (v?: string) => v == undefined || TIME_SHAPE.test(v);
+
+const isValidModelValue = (v: any) =>
+  Array.isArray(v)
+    ? v.length === 2 && v.every((item) => TIME_SHAPE.test(item))
+    : v == undefined || TIME_SHAPE.test(v);
+
 export const timePickerProps = {
   modelValue: {
     type: [String, Array] as PropType<string | [string, string] | null>,
     default: undefined,
-    validator: (v: any) => {
-      let ok;
-      if (Array.isArray(v)) {
-        ok = v.length === 2 && v.every((item) => TIME_SHAPE.test(item));
-      } else {
-        ok = v == undefined || TIME_SHAPE.test(v);
-      }
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`modelValue\` is wrong. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidModelValue,
+      (v) => `\`modelValue\` is wrong. Received: ${v}`,
+    ),
   },
   range: {
     type: Boolean,
@@ -101,37 +110,27 @@ export const timePickerProps = {
   minTime: {
     type: String as PropType<string | undefined>,
     default: undefined,
-    validator: (v?: string) => {
-      const ok = v == undefined || TIME_SHAPE.test(v);
-      if (!ok && isDev) {
-        console.error(`[VueTimepicker] \`minTime\` is wrong. Received: ${v}`);
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isOptionalTime,
+      (v) => `\`minTime\` is wrong. Received: ${v}`,
+    ),
   },
   maxTime: {
     type: String as PropType<string | undefined>,
     default: undefined,
-    validator: (v?: string) => {
-      const ok = v == undefined || TIME_SHAPE.test(v);
-      if (!ok && isDev) {
-        console.error(`[VueTimepicker] \`maxTime\` is wrong. Received: ${v}`);
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isOptionalTime,
+      (v) => `\`maxTime\` is wrong. Received: ${v}`,
+    ),
   },
   disabledTimes: {
     type: Array as PropType<ReadonlyArray<DisabledTimeInput> | undefined>,
     default: undefined,
-    validator: (v?: ReadonlyArray<DisabledTimeInput>) => {
-      const ok = v == undefined || v.every(isValidDisabledTimeEntry);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`disabledTimes\` is wrong. Received: ${JSON.stringify(v)}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v?: ReadonlyArray<DisabledTimeInput>) =>
+        v == undefined || v.every(isValidDisabledTimeEntry),
+      (v) => `\`disabledTimes\` is wrong. Received: ${JSON.stringify(v)}`,
+    ),
   },
   isTimeDisabled: {
     type: Function as PropType<(time: InternalFormat) => boolean>,
@@ -140,15 +139,10 @@ export const timePickerProps = {
   format: {
     type: String as PropType<TimeFormat>,
     default: "HH:mm",
-    validator: (fmt: string) => {
-      const ok = FORMAT_SHAPE.test(fmt);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`format\` format is wrong. Received: ${fmt}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (fmt: string) => FORMAT_SHAPE.test(fmt),
+      (fmt) => `\`format\` format is wrong. Received: ${fmt}`,
+    ),
   },
   placeholder: {
     type: String,
@@ -157,180 +151,88 @@ export const timePickerProps = {
   id: {
     type: String as PropType<string | undefined>,
     default: undefined,
-    validator: (v?: string) => {
-      const ok = v == undefined || typeof v === "string";
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`id\` must be a string. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v?: string) => v == undefined || typeof v === "string",
+      (v) => `\`id\` must be a string. Received: ${v}`,
+    ),
   },
   name: {
     type: String as PropType<string | undefined>,
     default: undefined,
-    validator: (v?: string) => {
-      const ok = v == undefined || typeof v === "string";
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`name\` must be a string. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v?: string) => v == undefined || typeof v === "string",
+      (v) => `\`name\` must be a string. Received: ${v}`,
+    ),
   },
   tabindex: {
     type: Number,
     default: 0,
-    validator: (v: number) => {
-      const ok = Number.isInteger(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`tabindex\` must be an integer. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v: number) => Number.isInteger(v),
+      (v) => `\`tabindex\` must be an integer. Received: ${v}`,
+    ),
   },
   autocomplete: {
     type: String,
     default: "off",
-    validator: (v: string) => {
-      const ok = typeof v === "string";
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`autocomplete\` must be a string. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v: string) => typeof v === "string",
+      (v) => `\`autocomplete\` must be a string. Received: ${v}`,
+    ),
   },
   inputClass: {
     type: [String, Array, Object] as PropType<
       string | string[] | Record<string, boolean> | undefined
     >,
     default: undefined,
-    validator: (v?: string | string[] | Record<string, boolean>) => {
-      const ok = isValidInputClassValue(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`inputClass\` must be a string, array, or object. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidInputClassValue,
+      (v) => `\`inputClass\` must be a string, array, or object. Received: ${v}`,
+    ),
   },
   inputWidth: {
     type: [String, Number] as PropType<string | number | undefined>,
     default: undefined,
-    validator: (v?: string | number) => {
-      const ok = isValidCssSizeValue(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`inputWidth\` must be a string or number. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidCssSizeValue,
+      (v) => `\`inputWidth\` must be a string or number. Received: ${v}`,
+    ),
   },
   componentWidth: {
     type: [String, Number] as PropType<string | number | undefined>,
     default: undefined,
-    validator: (v?: string | number) => {
-      const ok = isValidCssSizeValue(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`componentWidth\` must be a string or number. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidCssSizeValue,
+      (v) => `\`componentWidth\` must be a string or number. Received: ${v}`,
+    ),
   },
   minInputWidth: {
     type: [String, Number] as PropType<string | number | undefined>,
     default: undefined,
-    validator: (v?: string | number) => {
-      const ok = isValidCssSizeValue(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`minInputWidth\` must be a string or number. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidCssSizeValue,
+      (v) => `\`minInputWidth\` must be a string or number. Received: ${v}`,
+    ),
   },
   maxInputWidth: {
     type: [String, Number] as PropType<string | number | undefined>,
     default: undefined,
-    validator: (v?: string | number) => {
-      const ok = isValidCssSizeValue(v);
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`maxInputWidth\` must be a string or number. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
+    validator: withDevError(
+      isValidCssSizeValue,
+      (v) => `\`maxInputWidth\` must be a string or number. Received: ${v}`,
+    ),
   },
   size: {
     type: String as PropType<"xs" | "sm" | "md" | "lg" | "xl">,
     default: "md",
-    validator: (v: string) => {
-      const ok =
-        v === "xs" || v === "sm" || v === "md" || v === "lg" || v === "xl";
-      if (!ok && isDev) {
-        console.error(`[VueTimepicker] \`size\` is wrong. Received: ${v}`);
-      }
-      return ok;
-    },
+    validator: withDevError(
+      (v: string) => ["xs", "sm", "md", "lg", "xl"].includes(v),
+      (v) => `\`size\` is wrong. Received: ${v}`,
+    ),
   },
 } as const;
 
 export type TimePickerProps = ExtractPropTypes<typeof timePickerProps>;
-
-export const TimeSelectionProps = {
-  modelValue: {
-    type: [String, Array] as PropType<string | [string, string] | null>,
-    default: null,
-    validator: (v: any) => {
-      let ok;
-      if (Array.isArray(v)) {
-        ok = v.length === 2 && v.every((item) => TIME_SHAPE.test(item));
-      } else {
-        ok = v == null || TIME_SHAPE.test(v);
-      }
-      if (!ok && isDev) {
-        console.error(
-          `[VueTimepicker] \`modelValue\` is wrong. Received: ${v}`,
-        );
-      }
-      return ok;
-    },
-  },
-  range: {
-    type: Boolean,
-    default: false,
-  },
-  hourStep: { type: Number, default: 1 },
-  minuteStep: { type: Number, default: 1 },
-  secondStep: { type: Number, default: 1 },
-  format: {
-    type: String as PropType<TimeFormat>,
-    default: "HH:mm",
-    validator: (fmt: string) => {
-      const ok = FORMAT_SHAPE.test(fmt);
-      if (!ok && import.meta.env.DEV) {
-        console.error(
-          `[VueTimepicker] \`format\` format is wrong. Received: ${fmt}`,
-        );
-      }
-      return ok;
-    },
-  },
-} as const;
-
-export type TimeSelectionProps = ExtractPropTypes<typeof TimeSelectionProps>;
 
 export interface TimePickerEmits {
   (e: "update:modelValue", v: string | [string, string] | null): void;

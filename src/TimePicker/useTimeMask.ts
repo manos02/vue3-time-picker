@@ -12,7 +12,7 @@
 import { ref, computed, nextTick, type Ref, type ComputedRef } from "vue";
 import { FORMAT_SHAPE } from "./types";
 import type { InternalFormat } from "./types";
-import { hasK } from "../helpers";
+import { hasK, to12, to24 } from "../helpers";
 
 /* ──────────────────────────────────────────────────────────
  * Internal types
@@ -326,8 +326,7 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
 
     if (showAmPm) {
       ampm.value = time.h >= 12 ? "PM" : "AM";
-      hourVal = time.h % 12;
-      if (hourVal === 0) hourVal = 12;
+      hourVal = to12(time.h);
     } else if (hasK(format.value)) {
       hourVal = time.h === 0 ? 24 : time.h;
     }
@@ -366,7 +365,7 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
 
     // 12-h → 24-h conversion
     if (parsed.value.hasAmPm) {
-      h = ampm.value === "PM" ? (h === 12 ? 12 : h + 12) : h === 12 ? 0 : h;
+      h = to24(h, ampm.value === "PM");
     }
 
     // k-format: 24 → midnight
@@ -380,9 +379,6 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     () => rawDigits.value.length >= totalDigits.value,
   );
 
-  /** Whether the format uses lowercase a/p tokens */
-  const ampmLowercase = computed(() => parsed.value.ampmLowercase);
-
   return {
     inputValue,
     handleKeydown,
@@ -395,6 +391,5 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     totalDigits,
     displayPosToDigitIndex,
     ampm,
-    ampmLowercase,
   };
 }
