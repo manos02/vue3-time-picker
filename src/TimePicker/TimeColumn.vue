@@ -7,9 +7,11 @@
   >
     <div
       ref="menu"
+      :id="id"
       class="timepicker-dropdown__panel"
       role="listbox"
       tabindex="-1"
+      :aria-label="label"
       @scroll="onPanelScroll"
     >
       <div
@@ -22,7 +24,8 @@
           'timepicker-option--focused': i === focusIndex,
         }"
         role="option"
-        :tabindex="item.disabled ? -1 : 0"
+        :aria-selected="i === activeIndex"
+        :aria-disabled="item.disabled || undefined"
         @click="!item.disabled && onOptionClick(i)"
         @mousemove="!item.disabled && (focusIndex = i)"
       >
@@ -33,12 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue";
 import type { Item } from "./types";
 
 const props = defineProps<{
   items: Item[];
   activeIndex: number;
+  label?: string;
+  id?: string;
 }>();
 
 const emit = defineEmits<{
@@ -123,6 +128,16 @@ function onPanelScroll() {
 }
 
 onMounted(scrollToActive);
+// Keep keyboard-driven changes visible without re-centering on mouse clicks
+watch(
+  () => props.activeIndex,
+  () =>
+    nextTick(() =>
+      menu.value
+        ?.querySelector(".timepicker-option--active")
+        ?.scrollIntoView?.({ block: "nearest" }),
+    ),
+);
 onBeforeUnmount(() => {
   if (syncScrollTimer) clearTimeout(syncScrollTimer);
 });
