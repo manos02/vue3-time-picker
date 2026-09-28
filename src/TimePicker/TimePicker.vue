@@ -26,6 +26,10 @@
         :placeholder="placeholderText"
         :style="fieldStyle"
         :disabled="props.disabled"
+        role="combobox"
+        aria-haspopup="dialog"
+        :aria-expanded="openFirst"
+        :aria-controls="ariaControls('first')"
         @focus="!props.disabled && !props.hideDropdown && (openFirst = true)"
         @keydown="onFirstKeydown"
         @input="firstMask.handleInput"
@@ -48,6 +52,10 @@
           :placeholder="placeholderText"
           :style="fieldStyle"
           :disabled="props.disabled"
+          role="combobox"
+          aria-haspopup="dialog"
+          :aria-expanded="openSecond"
+          :aria-controls="ariaControls('second')"
           @focus="!props.disabled && !props.hideDropdown && (openSecond = true)"
           @keydown="onSecondKeydown"
           @input="secondMask.handleInput"
@@ -64,6 +72,8 @@
       :style="popoverStyle"
     >
       <TimeSelection
+        ref="firstSelectionRef"
+        :id="`${popoverId}-first`"
         v-model:open="openFirst"
         v-model:initTime="firstInit"
         :format="props.format"
@@ -81,6 +91,8 @@
       <!-- render second selector only for range mode -->
       <TimeSelection
         v-if="props.range"
+        ref="secondSelectionRef"
+        :id="`${popoverId}-second`"
         v-model:open="openSecond"
         v-model:initTime="secondInit"
         :format="props.format"
@@ -98,6 +110,10 @@
   </div>
 </template>
 
+<script lang="ts">
+let uid = 0;
+</script>
+
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
 import TimeSelection from "./TimeSelection.vue";
@@ -113,6 +129,8 @@ import {
   clampTimeToBounds,
   compareTimes,
   formatTime,
+  hasSeconds,
+  is12h,
   isTimeInRanges,
   isTimeWithinBounds,
   parseFromModel,
@@ -122,6 +140,7 @@ import { useTimeMask } from "./useTimeMask";
 type Target = "first" | "second";
 
 const lastErrorCode = ref<string | null>(null);
+const popoverId = `vtp-popover-${++uid}`;
 /* ================================
  * Props & emits
  * ================================ */
@@ -430,6 +449,15 @@ watch(
 
 const resolvedFormat = computed(() => props.format ?? "HH:mm:ss");
 const placeholderText = computed(() => props.placeholder ?? "Select time");
+/** The popover and its columns, so assistive tech knows what the input drives. */
+function ariaControls(target: Target): string {
+  const base = `${popoverId}-${target}`;
+  const columns = ["h", "m"];
+  if (hasSeconds(resolvedFormat.value)) columns.push("s");
+  if (is12h(resolvedFormat.value)) columns.push("ampm");
+  return [base, ...columns.map((c) => `${base}-${c}`)].join(" ");
+}
+
 const firstInputId = computed(() => props.id);
 const secondInputId = computed(() =>
   props.range && props.id ? `${props.id}-end` : undefined,
@@ -492,6 +520,8 @@ const secondInputValue = secondMask.inputValue;
 
 const firstInputRef = ref<HTMLInputElement | null>(null);
 const secondInputRef = ref<HTMLInputElement | null>(null);
+const firstSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
+const secondSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
 
 const popoverStyle = computed(() => {
   const targetInput =
@@ -546,6 +576,18 @@ function processMaskKeydown(
   if (e.key === "Enter") {
     e.preventDefault();
     commitMaskedTime(target);
+    closeAllDropdowns();
+    return false;
+  }
+
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    e.preventDefault();
+    stepSegmentAtCaret(
+      target,
+      e.target as HTMLInputElement,
+      mask,
+      e.key === "ArrowUp" ? -1 : 1,
+    );
     return false;
   }
 
@@ -568,6 +610,33 @@ function processMaskKeydown(
   }
 
   return isDigit;
+}
+
+/** Arrow keys open the popover, then step the column under the caret. */
+function stepSegmentAtCaret(
+  target: Target,
+  el: HTMLInputElement,
+  mask: ReturnType<typeof useTimeMask>,
+  dir: 1 | -1,
+) {
+  const open = target === "first" ? openFirst : openSecond;
+  if (!open.value) {
+    if (!props.hideDropdown) open.value = true;
+    return;
+  }
+
+  const pos = el.selectionStart ?? 0;
+  const digit = mask.displayPosToDigitIndex(pos);
+  const total = mask.totalDigits.value;
+  const column =
+    digit >= total && is12h(resolvedFormat.value)
+      ? "ampm"
+      : (["h", "m", "s"] as const)[Math.floor(Math.min(digit, total - 1) / 2)];
+
+  const selection = target === "first" ? firstSelectionRef : secondSelectionRef;
+  selection.value?.step(column, dir);
+  // Re-rendering the value moves the caret to the end; keep it on the segment
+  nextTick(() => el.setSelectionRange(pos, pos));
 }
 
 function onFirstKeydown(e: KeyboardEvent) {
