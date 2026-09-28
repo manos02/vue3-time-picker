@@ -1,14 +1,23 @@
 <template>
-  <div class="vtp-cols" v-if="openLocal" ref="root">
+  <div
+    class="vtp-cols"
+    v-if="openLocal"
+    ref="root"
+    :id="id"
+    role="dialog"
+    aria-label="Choose time"
+  >
     <TimeColumn
       v-model:activeIndex="hourIdx"
       :items="hoursList"
+      :id="columnId('h')"
       label="Hours"
     />
 
     <TimeColumn
       v-model:activeIndex="minuteIdx"
       :items="minutesList"
+      :id="columnId('m')"
       label="Minutes"
       @select="onMinuteSelect"
     />
@@ -17,6 +26,7 @@
       v-if="showSecondsUI"
       v-model:activeIndex="secondIdx"
       :items="secondsList"
+      :id="columnId('s')"
       label="Seconds"
       @select="onSecondSelect"
     />
@@ -25,6 +35,7 @@
       v-if="show12UI"
       v-model:activeIndex="ampmIdx"
       :items="ampmList"
+      :id="columnId('ampm')"
       label="AM/PM"
       @select="onAmpmSelect"
     />
@@ -56,6 +67,7 @@ function normalizeStep(step: number | undefined): number {
 }
 
 const props = defineProps<{
+  id?: string;
   open: boolean;
   initTime: InternalFormat;
 
@@ -329,6 +341,31 @@ function onAmpmSelect() {
 function confirm() {
   openLocal.value = false;
 }
+
+const columns = {
+  h: [hoursList, hourIdx],
+  m: [minutesList, minuteIdx],
+  s: [secondsList, secondIdx],
+  ampm: [ampmList, ampmIdx],
+} as const;
+
+const columnId = (column: keyof typeof columns) =>
+  props.id && `${props.id}-${column}`;
+
+/** Move a column to the next enabled item in `dir`, wrapping around. */
+function step(column: keyof typeof columns, dir: 1 | -1) {
+  const [list, idx] = columns[column];
+  const n = list.value.length;
+  for (let k = 1; k < n; k++) {
+    const i = (((idx.value + dir * k) % n) + n) % n;
+    if (!list.value[i].disabled) {
+      idx.value = i;
+      return;
+    }
+  }
+}
+
+defineExpose({ step });
 
 watch(
   [hourVal, minuteVal, secondVal],
