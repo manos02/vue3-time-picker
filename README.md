@@ -22,6 +22,7 @@ If this project helps you, a [GitHub star](https://github.com/manos02/vue3-time-
 - 24-hour, 12-hour, and `k`/`kk` 1-24 hour display formats
 - Optional seconds
 - Typing support with an overwrite-only masked input
+- Keyboard and screen-reader friendly (arrow-key navigation, ARIA attributes)
 - Step intervals for hours, minutes, and seconds
 - `minTime`, `maxTime`, `disabledTimes`, and callback-based disable rules
 - Validation and error events for form workflows
@@ -669,7 +670,11 @@ Examples:
 - The mask auto-inserts `:` separators.
 - In 12-hour mode, press `a` or `p` while focused to toggle AM/PM.
 - `Backspace` moves the cursor left without clearing the entire value.
+- `ArrowUp` / `ArrowDown` open the dropdown, then step the segment under the cursor (hours, minutes, seconds, or AM/PM), skipping disabled times.
+- `ArrowLeft` / `ArrowRight` move the cursor to choose which segment the arrows change.
+- `Enter` commits the typed value and closes the dropdown.
 - `Escape` closes the dropdown columns.
+- Focus stays on the input; dropdown options are not tab stops.
 
 ## Styling
 
