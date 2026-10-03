@@ -8,7 +8,7 @@ A Vue 3 time picker component with TypeScript support, multiple display formats,
 - Package page: [npm package](https://www.npmjs.com/package/@manik02/vue3-timepicker)
 - Issues: [GitHub issues](https://github.com/manos02/vue3-time-picker/issues)
 
-If this project helps you, a [GitHub star](https://github.com/manos02/vue3-time-picker) helps a lot.
+If this project helps you, a [GitHub star](https://github.com/manos02/vue3-time-picker) is appriciated.
 
 | Demo | Default | Dark |
 | --- | --- | --- |
