@@ -43,6 +43,20 @@ describe("mobile", () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
   });
 
+  it("Android typing moves on to the second range input", async () => {
+    const { wrapper, input, el } = mountOpen({
+      modelValue: ["09:00:00", "17:00:00"],
+      range: true,
+      format: "HH:mm:ss",
+    });
+    await input.trigger("focus");
+    el.setSelectionRange(0, 0);
+
+    await androidType(input, el, "101010");
+    await nextTick();
+    expect(document.activeElement).toBe(wrapper.findAll("input")[1].element);
+  });
+
   it("overwrites digits typed on an Android keyboard", async () => {
     const { wrapper, input, el } = mountOpen({
       modelValue: "12:30:00",

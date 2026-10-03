@@ -630,9 +630,15 @@ function onBeforeInput(
   mask: ReturnType<typeof useTimeMask>,
 ) {
   if (props.disabled) return;
+  const el = e.target as HTMLInputElement;
+  const cursorBefore = mask.displayPosToDigitIndex(el.selectionStart ?? 0);
   mask.handleBeforeInput(e);
-  if (e.defaultPrevented && /\d/.test(e.data ?? "")) {
-    syncTypedDigits(target, mask);
+
+  const digits = (e.data ?? "").replace(/\D/g, "").length;
+  if (!e.defaultPrevented || !digits) return;
+  syncTypedDigits(target, mask);
+  if (target === "first" && cursorBefore + digits >= mask.totalDigits.value) {
+    advanceToSecond();
   }
 }
 
@@ -673,17 +679,20 @@ function onFirstKeydown(e: KeyboardEvent) {
   const didTypeDigit = processMaskKeydown("first", e, firstMask);
   if (!didTypeDigit) return;
 
-  // In range mode, auto-focus the second input when the last digit is typed
-  if (props.range && isLastDigit && secondInputRef.value) {
-    commitMaskedTime("first");
-    nextTick(() => {
-      const el2 = secondInputRef.value;
-      if (el2) {
-        el2.focus();
-        el2.selectionStart = el2.selectionEnd = 0;
-      }
-    });
-  }
+  if (isLastDigit) advanceToSecond();
+}
+
+/** In range mode, auto-focus the second input when the last digit is typed */
+function advanceToSecond() {
+  if (!props.range || !secondInputRef.value) return;
+  commitMaskedTime("first");
+  nextTick(() => {
+    const el2 = secondInputRef.value;
+    if (el2) {
+      el2.focus();
+      el2.selectionStart = el2.selectionEnd = 0;
+    }
+  });
 }
 
 function onSecondKeydown(e: KeyboardEvent) {
