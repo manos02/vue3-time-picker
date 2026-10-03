@@ -31,7 +31,8 @@
         aria-haspopup="dialog"
         :aria-expanded="openFirst"
         :aria-controls="ariaControls('first')"
-        @focus="!props.disabled && !props.hideDropdown && (openFirst = true)"
+        @focus="openDropdown('first')"
+        @click="openDropdown('first')"
         @keydown="onFirstKeydown"
         @beforeinput="onBeforeInput('first', $event, firstMask)"
         @input="firstMask.handleInput"
@@ -59,7 +60,8 @@
           aria-haspopup="dialog"
           :aria-expanded="openSecond"
           :aria-controls="ariaControls('second')"
-          @focus="!props.disabled && !props.hideDropdown && (openSecond = true)"
+          @focus="openDropdown('second')"
+          @click="openDropdown('second')"
           @keydown="onSecondKeydown"
           @beforeinput="onBeforeInput('second', $event, secondMask)"
           @input="secondMask.handleInput"
@@ -156,6 +158,12 @@ const openFirst = ref(false);
 const openSecond = ref(false);
 const firstValidation = ref<ValidationState>("valid");
 const secondValidation = ref<ValidationState>("valid");
+
+// Also on click, so tapping an already-focused input reopens the popover
+function openDropdown(target: Target) {
+  if (props.disabled || props.hideDropdown) return;
+  (target === "first" ? openFirst : openSecond).value = true;
+}
 
 function closeAllDropdowns() {
   openFirst.value = false;

@@ -43,6 +43,20 @@ describe("mobile", () => {
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
   });
 
+  it("tapping the already-focused input reopens the popover", async () => {
+    const { wrapper, input, el } = mountOpen({
+      modelValue: "10:00:00",
+      format: "HH:mm",
+    });
+    await input.trigger("focus");
+    el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+
+    await input.trigger("click");
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+  });
+
   it("Android typing moves on to the second range input", async () => {
     const { wrapper, input, el } = mountOpen({
       modelValue: ["09:00:00", "17:00:00"],
