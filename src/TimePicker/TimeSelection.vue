@@ -109,17 +109,19 @@ const openLocal = computed({
  * ================================ */
 const root = ref<HTMLElement | null>(null);
 
-/** Outside click: close if click is not inside */
-function onDocMousedown(e: MouseEvent) {
+/** Outside click/tap: close unless it lands in this picker (inputs included,
+ *  so pressing the input doesn't blink the popover). pointerdown also fires
+ *  for iOS taps. */
+function onDocPointerdown(e: PointerEvent) {
   if (!openLocal.value) return;
-  const t = e.target as Node;
-  if (root.value && !root.value.contains(t)) {
+  const shell = root.value?.closest(".timepicker-shell");
+  if (shell && !shell.contains(e.target as Node)) {
     openLocal.value = false; // closes via update:open
   }
 }
-onMounted(() => document.addEventListener("mousedown", onDocMousedown));
+onMounted(() => document.addEventListener("pointerdown", onDocPointerdown));
 onBeforeUnmount(() =>
-  document.removeEventListener("mousedown", onDocMousedown),
+  document.removeEventListener("pointerdown", onDocPointerdown),
 );
 
 /**  ESC to close */

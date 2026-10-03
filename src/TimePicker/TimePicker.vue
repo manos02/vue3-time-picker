@@ -22,6 +22,7 @@
         :name="firstInputName"
         :tabindex="props.tabindex"
         :autocomplete="props.autocomplete"
+        inputmode="numeric"
         :value="firstInputValue"
         :placeholder="placeholderText"
         :style="fieldStyle"
@@ -30,8 +31,10 @@
         aria-haspopup="dialog"
         :aria-expanded="openFirst"
         :aria-controls="ariaControls('first')"
-        @focus="!props.disabled && !props.hideDropdown && (openFirst = true)"
+        @focus="openDropdown('first')"
+        @click="openDropdown('first')"
         @keydown="onFirstKeydown"
+        @beforeinput="onBeforeInput('first', $event, firstMask)"
         @input="firstMask.handleInput"
         @paste="firstMask.handlePaste"
         @blur="!props.disabled && commitMaskedTime('first')"
@@ -48,6 +51,7 @@
           :name="secondInputName"
           :tabindex="props.tabindex"
           :autocomplete="props.autocomplete"
+          inputmode="numeric"
           :value="secondInputValue"
           :placeholder="placeholderText"
           :style="fieldStyle"
@@ -56,8 +60,10 @@
           aria-haspopup="dialog"
           :aria-expanded="openSecond"
           :aria-controls="ariaControls('second')"
-          @focus="!props.disabled && !props.hideDropdown && (openSecond = true)"
+          @focus="openDropdown('second')"
+          @click="openDropdown('second')"
           @keydown="onSecondKeydown"
+          @beforeinput="onBeforeInput('second', $event, secondMask)"
           @input="secondMask.handleInput"
           @paste="secondMask.handlePaste"
           @blur="!props.disabled && commitMaskedTime('second')"
@@ -68,6 +74,7 @@
     <!-- Columns -->
     <div
       v-if="!props.hideDropdown"
+      ref="popoverRef"
       class="timepicker-popovers"
       :style="popoverStyle"
     >
@@ -151,6 +158,12 @@ const openFirst = ref(false);
 const openSecond = ref(false);
 const firstValidation = ref<ValidationState>("valid");
 const secondValidation = ref<ValidationState>("valid");
+
+// Also on click, so tapping an already-focused input reopens the popover
+function openDropdown(target: Target) {
+  if (props.disabled || props.hideDropdown) return;
+  (target === "first" ? openFirst : openSecond).value = true;
+}
 
 function closeAllDropdowns() {
   openFirst.value = false;
@@ -523,15 +536,28 @@ const secondInputRef = ref<HTMLInputElement | null>(null);
 const firstSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
 const secondSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
 
+const popoverRef = ref<HTMLElement | null>(null);
+const popoverShift = ref(0);
+
 const popoverStyle = computed(() => {
   const targetInput =
     props.range && openSecond.value
       ? secondInputRef.value
       : firstInputRef.value;
-  const left = targetInput?.offsetLeft ?? 0;
+  const left = (targetInput?.offsetLeft ?? 0) - popoverShift.value;
   return {
     left: `${left}px`,
   };
+});
+
+// Pull the popover left when it would overflow the viewport's right edge
+watch([openFirst, openSecond], async () => {
+  popoverShift.value = 0;
+  await nextTick();
+  const rect = popoverRef.value?.getBoundingClientRect();
+  if (!rect) return;
+  const overflow = rect.right - document.documentElement.clientWidth;
+  popoverShift.value = Math.max(0, Math.min(overflow, rect.left));
 });
 
 /* ================================
@@ -592,24 +618,36 @@ function processMaskKeydown(
   }
 
   const isDigit = /^\d$/.test(e.key);
-
-  // Close dropdowns while typing
-  if (isDigit) {
-    openFirst.value = false;
-    openSecond.value = false;
-  }
-
   mask.handleKeydown(e);
-
-  // Keep model in sync after every digit so the dropdown is up-to-date
-  if (isDigit) {
-    const parsed = mask.getParsedTime();
-    if (parsed) {
-      applyTime(target, parsed, { emitValidation: false });
-    }
-  }
-
+  if (isDigit) syncTypedDigits(target, mask);
   return isDigit;
+}
+
+/** Close dropdowns while typing and keep the model in sync after every digit */
+function syncTypedDigits(target: Target, mask: ReturnType<typeof useTimeMask>) {
+  closeAllDropdowns();
+  const parsed = mask.getParsedTime();
+  if (parsed) {
+    applyTime(target, parsed, { emitValidation: false });
+  }
+}
+
+function onBeforeInput(
+  target: Target,
+  e: InputEvent,
+  mask: ReturnType<typeof useTimeMask>,
+) {
+  if (props.disabled) return;
+  const el = e.target as HTMLInputElement;
+  const cursorBefore = mask.displayPosToDigitIndex(el.selectionStart ?? 0);
+  mask.handleBeforeInput(e);
+
+  const digits = (e.data ?? "").replace(/\D/g, "").length;
+  if (!e.defaultPrevented || !digits) return;
+  syncTypedDigits(target, mask);
+  if (target === "first" && cursorBefore + digits >= mask.totalDigits.value) {
+    advanceToSecond();
+  }
 }
 
 /** Arrow keys open the popover, then step the column under the caret. */
@@ -649,17 +687,20 @@ function onFirstKeydown(e: KeyboardEvent) {
   const didTypeDigit = processMaskKeydown("first", e, firstMask);
   if (!didTypeDigit) return;
 
-  // In range mode, auto-focus the second input when the last digit is typed
-  if (props.range && isLastDigit && secondInputRef.value) {
-    commitMaskedTime("first");
-    nextTick(() => {
-      const el2 = secondInputRef.value;
-      if (el2) {
-        el2.focus();
-        el2.selectionStart = el2.selectionEnd = 0;
-      }
-    });
-  }
+  if (isLastDigit) advanceToSecond();
+}
+
+/** In range mode, auto-focus the second input when the last digit is typed */
+function advanceToSecond() {
+  if (!props.range || !secondInputRef.value) return;
+  commitMaskedTime("first");
+  nextTick(() => {
+    const el2 = secondInputRef.value;
+    if (el2) {
+      el2.focus();
+      el2.selectionStart = el2.selectionEnd = 0;
+    }
+  });
 }
 
 function onSecondKeydown(e: KeyboardEvent) {
