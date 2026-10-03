@@ -228,7 +228,11 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
       return;
 
     e.preventDefault();
+    applyKey(key, el);
+  }
 
+  /** Overwrite-mode edit for a single key at the cursor. */
+  function applyKey(key: string, el: HTMLInputElement): void {
     const cursorPos = el.selectionStart ?? 0;
     const digitAtCursor = displayPosToDigitIndex(cursorPos);
 
@@ -268,6 +272,20 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
     }
 
     // Everything else → ignore
+  }
+
+  /** Android soft keyboards send keydown with key "Unidentified", so the
+   *  typed text only arrives here. Apply it with the same overwrite rules. */
+  function handleBeforeInput(e: InputEvent): void {
+    const el = e.target as HTMLInputElement;
+    if (e.inputType === "deleteContentBackward") {
+      e.preventDefault();
+      applyKey("Backspace", el);
+    } else if (e.inputType === "insertText" && e.data) {
+      e.preventDefault();
+      for (const ch of e.data) applyKey(ch, el);
+    }
+    // Anything else (autofill, IME composition) falls through to handleInput
   }
 
   /** Safety-net: normalise whatever ended up in the input (autocomplete,
@@ -382,6 +400,7 @@ export function useTimeMask(format: Ref<string> | ComputedRef<string>) {
   return {
     inputValue,
     handleKeydown,
+    handleBeforeInput,
     handleInput,
     handlePaste,
     setFromTime,

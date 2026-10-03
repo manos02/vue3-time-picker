@@ -32,6 +32,7 @@
         :aria-controls="ariaControls('first')"
         @focus="!props.disabled && !props.hideDropdown && (openFirst = true)"
         @keydown="onFirstKeydown"
+        @beforeinput="onBeforeInput('first', $event, firstMask)"
         @input="firstMask.handleInput"
         @paste="firstMask.handlePaste"
         @blur="!props.disabled && commitMaskedTime('first')"
@@ -58,6 +59,7 @@
           :aria-controls="ariaControls('second')"
           @focus="!props.disabled && !props.hideDropdown && (openSecond = true)"
           @keydown="onSecondKeydown"
+          @beforeinput="onBeforeInput('second', $event, secondMask)"
           @input="secondMask.handleInput"
           @paste="secondMask.handlePaste"
           @blur="!props.disabled && commitMaskedTime('second')"
@@ -592,24 +594,30 @@ function processMaskKeydown(
   }
 
   const isDigit = /^\d$/.test(e.key);
-
-  // Close dropdowns while typing
-  if (isDigit) {
-    openFirst.value = false;
-    openSecond.value = false;
-  }
-
   mask.handleKeydown(e);
-
-  // Keep model in sync after every digit so the dropdown is up-to-date
-  if (isDigit) {
-    const parsed = mask.getParsedTime();
-    if (parsed) {
-      applyTime(target, parsed, { emitValidation: false });
-    }
-  }
-
+  if (isDigit) syncTypedDigits(target, mask);
   return isDigit;
+}
+
+/** Close dropdowns while typing and keep the model in sync after every digit */
+function syncTypedDigits(target: Target, mask: ReturnType<typeof useTimeMask>) {
+  closeAllDropdowns();
+  const parsed = mask.getParsedTime();
+  if (parsed) {
+    applyTime(target, parsed, { emitValidation: false });
+  }
+}
+
+function onBeforeInput(
+  target: Target,
+  e: InputEvent,
+  mask: ReturnType<typeof useTimeMask>,
+) {
+  if (props.disabled) return;
+  mask.handleBeforeInput(e);
+  if (e.defaultPrevented && /\d/.test(e.data ?? "")) {
+    syncTypedDigits(target, mask);
+  }
 }
 
 /** Arrow keys open the popover, then step the column under the caret. */
