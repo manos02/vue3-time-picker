@@ -49,12 +49,24 @@ describe("mobile", () => {
       format: "HH:mm",
     });
     await input.trigger("focus");
-    el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     await nextTick();
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
 
     await input.trigger("click");
     expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+  });
+
+  it("pressing the picker's own input does not close its popover", async () => {
+    const { wrapper, input, el } = mountOpen({
+      modelValue: "10:00:00",
+      format: "HH:mm",
+    });
+    await input.trigger("focus");
+    el.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+    await nextTick();
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+    expect(wrapper.emitted("close")).toBeUndefined();
   });
 
   it("Android typing moves on to the second range input", async () => {
