@@ -72,6 +72,7 @@
     <!-- Columns -->
     <div
       v-if="!props.hideDropdown"
+      ref="popoverRef"
       class="timepicker-popovers"
       :style="popoverStyle"
     >
@@ -527,15 +528,28 @@ const secondInputRef = ref<HTMLInputElement | null>(null);
 const firstSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
 const secondSelectionRef = ref<InstanceType<typeof TimeSelection> | null>(null);
 
+const popoverRef = ref<HTMLElement | null>(null);
+const popoverShift = ref(0);
+
 const popoverStyle = computed(() => {
   const targetInput =
     props.range && openSecond.value
       ? secondInputRef.value
       : firstInputRef.value;
-  const left = targetInput?.offsetLeft ?? 0;
+  const left = (targetInput?.offsetLeft ?? 0) - popoverShift.value;
   return {
     left: `${left}px`,
   };
+});
+
+// Pull the popover left when it would overflow the viewport's right edge
+watch([openFirst, openSecond], async () => {
+  popoverShift.value = 0;
+  await nextTick();
+  const rect = popoverRef.value?.getBoundingClientRect();
+  if (!rect) return;
+  const overflow = rect.right - document.documentElement.clientWidth;
+  popoverShift.value = Math.max(0, Math.min(overflow, rect.left));
 });
 
 /* ================================
